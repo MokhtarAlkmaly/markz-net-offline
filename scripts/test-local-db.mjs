@@ -29,7 +29,7 @@ console.log("اختبار قاعدة البيانات المحلية (sql.js + �
 const USER_A = "user-a";
 const USER_B = "user-b";
 
-await ok("المخطط: كل الجداول العشرين موجودة", async () => {
+await ok("المخطط: كل الجداول الاثنين والعشرين موجودة", async () => {
   const conn = await db.getDB();
   const res = await conn.query(
     `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`,
@@ -40,7 +40,9 @@ await ok("المخطط: كل الجداول العشرين موجودة", async 
     "awards",
     "certificates",
     "ceremony_expenses",
+    "community_records",
     "data_grants",
+    "exam_questions",
     "donors",
     "external_competitions",
     "hifz_history",
@@ -241,6 +243,139 @@ await ok("المتابعة الشهرية والبوابة والترسيلات:
   if (afterDelete.length !== 0) throw new Error("حذف متابعة الطالب/العام لم يعمل");
 });
 
+await ok("سجل المجتمع وبنك الأسئلة: CRUD وعزل بالمستخدم والقسم/العام", async () => {
+  const stamp = "2026-01-01T00:00:00.000Z";
+  await db.putCachedCommunityRecord({
+    id: "cr-a-1",
+    user_id: USER_A,
+    department: "care",
+    program_id: "orphan_sponsorship",
+    beneficiary_name: "مستفيد أ",
+    beneficiary_type: "فرد",
+    phone: null,
+    guardian_name: null,
+    address: null,
+    service_date: "1447-01-01",
+    status: "registered",
+    group_name: null,
+    sponsor_name: null,
+    amount: 100,
+    currency: "ريال",
+    quantity: null,
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+  await db.putCachedCommunityRecord({
+    id: "cr-a-2",
+    user_id: USER_A,
+    department: "training",
+    program_id: "quran_teacher_training",
+    beneficiary_name: "متدربة أ",
+    beneficiary_type: "فرد",
+    phone: null,
+    guardian_name: null,
+    address: null,
+    service_date: "1447-02-01",
+    status: "active",
+    group_name: null,
+    sponsor_name: null,
+    amount: null,
+    currency: null,
+    quantity: null,
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+  await db.putCachedCommunityRecord({
+    id: "cr-b-1",
+    user_id: USER_B,
+    department: "care",
+    program_id: "orphan_sponsorship",
+    beneficiary_name: "مستفيد ب",
+    beneficiary_type: "فرد",
+    phone: null,
+    guardian_name: null,
+    address: null,
+    service_date: "1447-01-15",
+    status: "registered",
+    group_name: null,
+    sponsor_name: null,
+    amount: null,
+    currency: null,
+    quantity: null,
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+
+  const careA = await db.getCachedCommunityRecordsForDepartment(USER_A, "care");
+  if (careA.length !== 1 || careA[0].id !== "cr-a-1") {
+    throw new Error("استعلام قسم الرعاية لم يعزل بالمستخدم والقسم");
+  }
+  const trainingA = await db.getCachedCommunityRecordsForDepartment(USER_A, "training");
+  if (trainingA.length !== 1 || trainingA[0].id !== "cr-a-2") {
+    throw new Error("استعلام قسم التدريب أعاد صفوفاً خاطئة");
+  }
+
+  await db.putCachedExamQuestion({
+    id: "eq-a-1",
+    user_id: USER_A,
+    year: "1447",
+    category: "ثلاثة أجزاء",
+    subject: "حفظ",
+    question_type: "memorization",
+    question: "اقرأ غيبًا من بداية سورة النبأ",
+    choices: null,
+    correct_answer: null,
+    difficulty: "متوسط",
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+  await db.putCachedExamQuestion({
+    id: "eq-b-1",
+    user_id: USER_B,
+    year: "1447",
+    category: "جزء واحد",
+    subject: "حفظ",
+    question_type: "memorization",
+    question: "اقرأ غيبًا من بداية سورة الضحى",
+    choices: null,
+    correct_answer: null,
+    difficulty: "سهل",
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+
+  const examA = await db.getCachedExamQuestionsForYear(USER_A, "1447");
+  if (examA.length !== 1 || examA[0].id !== "eq-a-1") {
+    throw new Error("استعلام بنك الأسئلة لم يعزل بالمستخدم والعام");
+  }
+
+  await db.deleteCachedExamQuestion("eq-a-1");
+  if ((await db.getCachedExamQuestionsForYear(USER_A, "1447")).length !== 0) {
+    throw new Error("حذف السؤال لم ينجح");
+  }
+  // نعيده حتى يُختبر حذفه ضمن deleteAllRowsForUser في الاختبار التالي.
+  await db.putCachedExamQuestion({
+    id: "eq-a-1",
+    user_id: USER_A,
+    year: "1447",
+    category: "ثلاثة أجزاء",
+    subject: "حفظ",
+    question_type: "memorization",
+    question: "اقرأ غيبًا من بداية سورة النبأ",
+    choices: null,
+    correct_answer: null,
+    difficulty: "متوسط",
+    notes: null,
+    created_at: stamp,
+    updated_at: stamp,
+  });
+});
+
 await ok("deleteAllRowsForUser: حذف مستخدم لا يمسّ بيانات غيره ولا الحسابات", async () => {
   // بيانات لمستخدم ثانٍ + حسابات مستخدمين في جدول app_users
   const conn = await db.getDB();
@@ -279,6 +414,19 @@ await ok("deleteAllRowsForUser: حذف مستخدم لا يمسّ بيانات �
   if ((users.values ?? []).length !== 1) throw new Error("جدول الحسابات تأثر بالحذف");
   const subsLeft = await db.getSubmissions(USER_A);
   if (subsLeft.length !== 0) throw new Error("ترسيلات المستخدم الأول لم تُحذف");
+
+  // سجل المجتمع وبنك الأسئلة: صفوف المستخدم الأول تُحذف وصفوف الثاني تبقى.
+  const careLeftA = await db.getCachedCommunityRecordsForDepartment(USER_A, "care");
+  const trainingLeftA = await db.getCachedCommunityRecordsForDepartment(USER_A, "training");
+  if (careLeftA.length !== 0 || trainingLeftA.length !== 0) {
+    throw new Error("سجل المجتمع للمستخدم الأول لم يُحذف");
+  }
+  const careLeftB = await db.getCachedCommunityRecordsForDepartment(USER_B, "care");
+  if (careLeftB.length !== 1) throw new Error("سجل المجتمع للمستخدم الثاني حُذف خطأً");
+  const examLeftA = await db.getCachedExamQuestionsForYear(USER_A, "1447");
+  if (examLeftA.length !== 0) throw new Error("بنك أسئلة المستخدم الأول لم يُحذف");
+  const examLeftB = await db.getCachedExamQuestionsForYear(USER_B, "1447");
+  if (examLeftB.length !== 1) throw new Error("بنك أسئلة المستخدم الثاني حُذف خطأً");
 });
 
 finish("اختبار قاعدة البيانات المحلية");

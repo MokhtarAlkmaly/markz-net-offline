@@ -16,7 +16,7 @@
  * له قاعدة بيانات واسم تخزين وكاش خاص به، فلا يستبدل بيانات التطبيق السابق.
  */
 
-const VERSION = "markz-net-v2";
+const VERSION = "markz-net-v3";
 const ASSETS_CACHE = `${VERSION}-assets`;
 const PAGES_CACHE = `${VERSION}-pages`;
 
@@ -25,14 +25,21 @@ const APP_PAGES = [
   "/",
   "/auth",
   "/teacher",
+  "/students",
   "/monthly",
+  "/monthly-search",
   "/halaqat",
   "/competition",
+  "/exam-questions",
+  "/alerts",
+  "/care",
+  "/training",
   "/search",
   "/media",
   "/settings",
   "/users",
   "/teachers",
+  "/teacher-links",
   "/awards",
   "/certificates",
   "/donors",

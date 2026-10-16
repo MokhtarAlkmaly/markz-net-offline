@@ -5,6 +5,7 @@ import {
   Users,
   Trophy,
   BookOpen,
+  BookOpenCheck,
   CalendarDays,
   Search,
   Award,
@@ -25,10 +26,14 @@ import {
   EyeOff,
   Link2,
   Inbox,
+  UsersRound,
+  BellRing,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { OfflineBadge } from "@/components/OfflineBadge";
-import { BRAND_NAME, BRAND_OFFLINE_TAG, BRAND_SIGNATURE } from "@/lib/brand";
+import { BRAND_NAME, BRAND_NAME_TAGGED, BRAND_OFFLINE_TAG, BRAND_SIGNATURE } from "@/lib/brand";
+import { getCenterSection } from "@/lib/center-sections";
 import { useAuth } from "@/hooks/useAuth";
 
 export const AppSidebar = () => {
@@ -36,6 +41,7 @@ export const AppSidebar = () => {
   const location = useLocation();
   const { signOut, isAdmin, sharedWithMe, viewAs, setViewAs } = useAuth();
   const pathname = location.pathname || "/";
+  const section = getCenterSection(pathname);
 
   // أصحاب البيانات الذين سمحوا لي بالاطلاع (يُستثنى حسابي أنا).
   const shareableOwners = sharedWithMe;
@@ -52,19 +58,45 @@ export const AppSidebar = () => {
     if (typeof window !== "undefined") window.location.reload();
   };
 
-  const navItems = [
+  /**
+   * الصفحتان الأساسيتان للمركز: سجل الطلاب الشامل و سجل المعلمين والمعلمات.
+   * كلتاهما مستقلتان عن أي عام، ولذلك تظهران في أعلى القائمة وفي كل الأقسام.
+   */
+  const primaryNavItems = [
     {
-      to: "/",
-      label: "سجل الطلاب الرسمي",
+      to: "/students",
+      label: "الطلاب",
       icon: GraduationCap,
-      badge: "الرئيسية",
-      color: "text-emerald-400",
+      badge: "أساسي",
+      color: "text-emerald-300",
     },
+    {
+      to: "/teachers",
+      label: "المعلمون والمعلمات",
+      icon: Users,
+      badge: "أساسي",
+      color: "text-indigo-300",
+    },
+    {
+      to: "/halaqat",
+      label: "الحلقات",
+      icon: UsersRound,
+      color: "text-cyan-300",
+    },
+  ];
+
+  const quranNavItems = [
     {
       to: "/competition",
       label: "المسابقة الرمضانية",
       icon: BookOpen,
       color: "text-amber-400",
+    },
+    {
+      to: "/exam-questions",
+      label: "الأسئلة والاختبارات",
+      icon: BookOpenCheck,
+      color: "text-emerald-300",
     },
     {
       to: "/monthly",
@@ -79,6 +111,12 @@ export const AppSidebar = () => {
       color: "text-sky-300",
     },
     {
+      to: "/alerts",
+      label: "المتأخرات والتنبيهات",
+      icon: BellRing,
+      color: "text-rose-300",
+    },
+    {
       to: "/teacher-links",
       label: "روابط المعلمين والمعلمات",
       icon: Link2,
@@ -89,18 +127,6 @@ export const AppSidebar = () => {
       label: "وارد المعلمين والمعلمات",
       icon: Inbox,
       color: "text-amber-300",
-    },
-    {
-      to: "/halaqat",
-      label: "إدارة الحلقات",
-      icon: Users,
-      color: "text-cyan-300",
-    },
-    {
-      to: "/teachers",
-      label: "المعلمين والمعلمات والإكراميات",
-      icon: Users,
-      color: "text-indigo-300",
     },
     {
       to: "/awards",
@@ -176,10 +202,72 @@ export const AppSidebar = () => {
       : []),
   ];
 
+  // أدوات سجل القرآن الكريم تبقى مستقلة عن قائمتي قسمي الرعاية والتدريب.
+  const navItems =
+    section.id === "quran"
+      ? quranNavItems
+      : [
+          {
+            to: section.to,
+            label: "سجل المستفيدين والبرامج",
+            icon: section.icon,
+            color: "text-emerald-300",
+          },
+          {
+            to: "/",
+            label: "العودة إلى قسم القرآن الكريم",
+            icon: BookOpen,
+            color: "text-amber-300",
+          },
+        ];
+
   const isActive = (path: string) => {
     if (path === "/" && (pathname === "/" || pathname === "")) return true;
+    // سجل الطلاب يعمل على المسارين: /students و / (الصفحة الرئيسية).
+    if (path === "/students" && (pathname === "/" || pathname === "")) return true;
     if (path !== "/" && pathname.startsWith(path)) return true;
     return false;
+  };
+
+  const renderNavItem = (item: {
+    to: string;
+    label: string;
+    icon: LucideIcon;
+    badge?: string;
+    color: string;
+  }) => {
+    const active = isActive(item.to);
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        onClick={() => setMobileOpen(false)}
+        className={`group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
+          active
+            ? "bg-gradient-to-l from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-900/40 ring-1 ring-white/20 translate-x-[-2px]"
+            : "text-white/75 hover:bg-white/10 hover:text-white"
+        }`}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`rounded-lg p-1.5 transition-colors ${
+              active
+                ? "bg-white/20 text-white"
+                : "bg-white/5 text-white/70 group-hover:bg-white/15 group-hover:text-white"
+            }`}
+          >
+            <Icon className={`h-4 w-4 ${active ? "text-white" : item.color}`} />
+          </div>
+          <span>{item.label}</span>
+        </div>
+        {item.badge && (
+          <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-black text-amber-300 ring-1 ring-amber-400/40">
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
   };
 
   return (
@@ -215,20 +303,14 @@ export const AppSidebar = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center border-b border-white/10 p-4 text-center">
           <div className="relative mb-2 rounded-2xl bg-white/95 p-2 shadow-lg ring-2 ring-amber-400/30">
-            <img
-              src={logo}
-              alt="Markz Net — نسخة بلا إنترنت"
-              className="h-14 w-14 object-contain"
-            />
+            <img src={logo} alt={BRAND_NAME_TAGGED} className="h-14 w-14 object-contain" />
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-300 ring-1 ring-white/15">
             <Sparkles className="h-3 w-3" />
             {BRAND_NAME} · {BRAND_OFFLINE_TAG}
           </div>
-          <h2 className="mt-1.5 text-base font-black tracking-tight text-white">
-            قسم القرآن الكريم
-          </h2>
-          <p className="text-[11px] text-white/60">نظام الإدارة وسجل الطلاب الشامل</p>
+          <h2 className="mt-1.5 text-base font-black tracking-tight text-white">{section.title}</h2>
+          <p className="text-[11px] text-white/60">{section.description}</p>
 
           <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
             <OfflineBadge tone="glass" />
@@ -238,43 +320,16 @@ export const AppSidebar = () => {
         {/* Navigation Items */}
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 custom-scrollbar">
           <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-white/40">
-            صفحات النظام
+            الصفحات الأساسية
           </div>
 
-          {navItems.map((item) => {
-            const active = isActive(item.to);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className={`group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
-                  active
-                    ? "bg-gradient-to-l from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-900/40 ring-1 ring-white/20 translate-x-[-2px]"
-                    : "text-white/75 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`rounded-lg p-1.5 transition-colors ${
-                      active
-                        ? "bg-white/20 text-white"
-                        : "bg-white/5 text-white/70 group-hover:bg-white/15 group-hover:text-white"
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 ${active ? "text-white" : item.color}`} />
-                  </div>
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-black text-amber-300 ring-1 ring-amber-400/40">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          {primaryNavItems.map(renderNavItem)}
+
+          <div className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wider text-white/40">
+            صفحات القسم
+          </div>
+
+          {navItems.map(renderNavItem)}
         </div>
 
         {/* Footer info & Logout */}

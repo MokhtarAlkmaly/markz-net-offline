@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
+import { CenterSectionTabs } from "@/components/CenterSectionTabs";
 import { ViewAsBanner } from "@/components/ViewAsBanner";
 import { getSessionUser } from "@/utils/localAuth";
 
@@ -39,6 +40,7 @@ function AuthenticatedLayout() {
       <main className="min-h-screen min-w-0 md:mr-72">
         {/* يظهر فقط أثناء الاطلاع على بيانات مستخدم آخر (قراءة فقط) */}
         <ViewAsBanner />
+        <CenterSectionTabs />
         <Outlet />
       </main>
     </div>

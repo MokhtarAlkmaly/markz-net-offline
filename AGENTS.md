@@ -30,16 +30,27 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 
 ## البنية المحلية
 
-| الملف | الدور |
-| --- | --- |
-| `src/utils/sqliteClient.ts` | فتح القاعدة + المخطط الكامل (كل الجداول مع `user_id`) |
-| `src/utils/localDB.ts` | طبقة CRUD فوق SQLite (كاش + استعلامات مفلترة بالمستخدم) |
-| `src/utils/localAuth.ts` | مصادقة محلية (PBKDF2) — أول حساب يصبح admin |
-| `src/utils/users.ts` | إدارة المستخدمين والصلاحيات ومنح الاطلاع |
-| `src/utils/storage.ts` | واجهة البيانات للصفحات (كانت سحابية — صارت محلية بالكامل) |
-| `src/utils/teacherPortal.ts` | روابط المعلمين/المعلمات + وارد الترسيلات الشهرية |
-| `src/utils/mediaStore.ts` | متجر وسائط IndexedDB |
-| `src/utils/viewAs.ts` | وضع "الاطلاع على بيانات مستخدم آخر" (قراءة فقط) |
+| الملف                           | الدور                                                      |
+| ------------------------------- | ---------------------------------------------------------- |
+| `src/utils/sqliteClient.ts`     | فتح القاعدة + المخطط الكامل (كل الجداول مع `user_id`)      |
+| `src/utils/localDB.ts`          | طبقة CRUD فوق SQLite (كاش + استعلامات مفلترة بالمستخدم)    |
+| `src/utils/localAuth.ts`        | مصادقة محلية (PBKDF2) — أول حساب يصبح admin                |
+| `src/utils/users.ts`            | إدارة المستخدمين والصلاحيات ومنح الاطلاع                   |
+| `src/utils/storage.ts`          | واجهة البيانات للصفحات (كانت سحابية — صارت محلية بالكامل)  |
+| `src/utils/teacherPortal.ts`    | روابط المعلمين/المعلمات + وارد الترسيلات الشهرية           |
+| `src/utils/mediaStore.ts`       | متجر وسائط IndexedDB                                       |
+| `src/utils/viewAs.ts`           | وضع "الاطلاع على بيانات مستخدم آخر" (قراءة فقط)            |
+| `src/utils/communityStorage.ts` | سجل المجتمع (أقسام الرعاية/التدريب) — محلي بالكامل         |
+| `src/utils/examStorage.ts`      | بنك أسئلة الاختبارات — محلي بالكامل                        |
+| `src/utils/quranText.ts`        | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت) |
+
+ميزات منقولة من المستودع الأصلي (بنسخة محلية خالصة): سجل المعلمين والمعلمات
+العام بتبويباته (`src/components/teachers/`)، الأسئلة والاختبارات
+(`src/components/exam/` + `src/utils/examPaperGenerator.ts`)، المتأخرات
+والتنبيهات (`src/pages/OverdueAlerts.tsx` + `src/lib/overdue-alerts.ts`)،
+وأقسام المركز (`src/pages/CenterDepartment.tsx` + `src/components/CommunityRegistry.tsx`).
+جدولا `community_records` و`exam_questions` مضافان للمخطط مع عزل `user_id`
+وضمن `deleteAllRowsForUser`.
 
 ## عزل بيانات المستخدمين
 
