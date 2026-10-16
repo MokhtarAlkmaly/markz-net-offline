@@ -65,23 +65,24 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 
 ## البنية المحلية
 
-| الملف                           | الدور                                                      |
-| ------------------------------- | ---------------------------------------------------------- |
-| `src/utils/sqliteClient.ts`     | فتح القاعدة + المخطط الكامل (كل الجداول مع `user_id`)      |
-| `src/utils/localDB.ts`          | طبقة CRUD فوق SQLite (كاش + استعلامات مفلترة بالمستخدم)    |
-| `src/utils/localAuth.ts`        | مصادقة محلية (PBKDF2) — أول حساب يصبح admin                |
-| `src/utils/users.ts`            | إدارة المستخدمين والصلاحيات ومنح الاطلاع                   |
-| `src/utils/storage.ts`          | واجهة البيانات للصفحات (كانت سحابية — صارت محلية بالكامل)  |
-| `src/utils/teacherPortal.ts`    | روابط المعلمين/المعلمات + وارد الترسيلات الشهرية           |
-| `src/utils/mediaStore.ts`       | متجر وسائط IndexedDB                                       |
-| `src/utils/viewAs.ts`           | وضع "الاطلاع على بيانات مستخدم آخر" (قراءة فقط)            |
-| `src/utils/communityStorage.ts` | سجل المجتمع (أقسام الرعاية/التدريب) — محلي بالكامل         |
-| `src/utils/examStorage.ts`      | بنك أسئلة الاختبارات — محلي بالكامل                        |
-| `src/utils/quranText.ts`        | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت) |
-| `src/hooks/useSidebarDock.ts`   | نقطة تثبيت القائمة الجانبية (1280px) — مصدر واحد           |
-| `src/lib/center-brand.ts`       | هوية المركز (اسم/إشراف/شعار) + ذاكرة قوالب الطباعة         |
-| `src/lib/print-branding.ts`     | يضيف هوية الحساب تلقائياً لقوالب الطباعة غير المعرّفة      |
-| `src/hooks/useCenterBrand.tsx`  | مزوّد الهوية لكل الواجهة (`useCenterBrand`)                |
+| الملف                             | الدور                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `src/utils/sqliteClient.ts`       | فتح القاعدة + المخطط الكامل (كل الجداول مع `user_id`)                  |
+| `src/utils/localDB.ts`            | طبقة CRUD فوق SQLite (كاش + استعلامات مفلترة بالمستخدم)                |
+| `src/utils/localAuth.ts`          | مصادقة محلية (PBKDF2) — أول حساب يصبح admin                            |
+| `src/utils/users.ts`              | إدارة المستخدمين والصلاحيات ومنح الاطلاع                               |
+| `src/utils/storage.ts`            | واجهة البيانات للصفحات (كانت سحابية — صارت محلية بالكامل)              |
+| `src/utils/studentExcelImport.ts` | استيراد Excel للسجل الشامل (مطابقة بالاسم + الأعوام + الأعمدة المخصصة) |
+| `src/utils/teacherPortal.ts`      | روابط المعلمين/المعلمات + وارد الترسيلات الشهرية                       |
+| `src/utils/mediaStore.ts`         | متجر وسائط IndexedDB                                                   |
+| `src/utils/viewAs.ts`             | وضع "الاطلاع على بيانات مستخدم آخر" (قراءة فقط)                        |
+| `src/utils/communityStorage.ts`   | سجل المجتمع (أقسام الرعاية/التدريب) — محلي بالكامل                     |
+| `src/utils/examStorage.ts`        | بنك أسئلة الاختبارات — محلي بالكامل                                    |
+| `src/utils/quranText.ts`          | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت)             |
+| `src/hooks/useSidebarDock.ts`     | نقطة تثبيت القائمة الجانبية (1280px) — مصدر واحد                       |
+| `src/lib/center-brand.ts`         | هوية المركز (اسم/إشراف/شعار) + ذاكرة قوالب الطباعة                     |
+| `src/lib/print-branding.ts`       | يضيف هوية الحساب تلقائياً لقوالب الطباعة غير المعرّفة                  |
+| `src/hooks/useCenterBrand.tsx`    | مزوّد الهوية لكل الواجهة (`useCenterBrand`)                            |
 
 ميزات منقولة من المستودع الأصلي (بنسخة محلية خالصة): سجل المعلمين والمعلمات
 العام بتبويباته (`src/components/teachers/`)، الأسئلة والاختبارات
@@ -90,6 +91,17 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 وأقسام المركز (`src/pages/CenterDepartment.tsx` + `src/components/CommunityRegistry.tsx`).
 جدولا `community_records` و`exam_questions` مضافان للمخطط مع عزل `user_id`
 وضمن `deleteAllRowsForUser`.
+
+## استيراد السجل الشامل من Excel
+
+- صفحة الطلاب (`/students`): استيراد/تصدير Excel + قالب وإرشادات.
+- المنطق في `src/utils/studentExcelImport.ts` (بلا اعتماد على xlsx — القراءة
+  في الواجهة عبر `loadXLSX`): المفتاح اسم الطالب بعد التطبيع
+  (`normalizeStudentName`)، الموجود يُحدَّث والجديد يُنشأ، والفراغ لا يدهس
+  القيمة الحالية، وأعوام العمود «الأعوام المسجل بها» تُسجَّل في `year_data`
+  (ذو الحجة بصيغة `1447D`) والحفظ التراكمي يُكتب في آخر عام بالملف.
+- الدليل: `docs/استيراد-السجل-الشامل-Excel.md`، والاختبارات ضمن
+  `npm run test:integration`.
 
 ## عزل بيانات المستخدمين
 

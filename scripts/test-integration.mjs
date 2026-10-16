@@ -25,14 +25,23 @@ export * as users from ${JSON.stringify(path.join(ROOT, "src/utils/users.ts"))};
 export * as storage from ${JSON.stringify(path.join(ROOT, "src/utils/storage.ts"))};
 export * as teacherPortal from ${JSON.stringify(path.join(ROOT, "src/utils/teacherPortal.ts"))};
 export * as viewAs from ${JSON.stringify(path.join(ROOT, "src/utils/viewAs.ts"))};
+export * as studentImport from ${JSON.stringify(path.join(ROOT, "src/utils/studentExcelImport.ts"))};
 export * as centerBrand from ${JSON.stringify(path.join(ROOT, "src/lib/center-brand.ts"))};
 export * as printBranding from ${JSON.stringify(path.join(ROOT, "src/lib/print-branding.ts"))};
 `,
   outfile: path.join(ROOT, ".output/tests/test-integration.mjs"),
 });
 
-const { localAuth, users, storage, teacherPortal, viewAs, centerBrand, printBranding } =
-  await import(outfile);
+const {
+  localAuth,
+  users,
+  storage,
+  teacherPortal,
+  viewAs,
+  studentImport,
+  centerBrand,
+  printBranding,
+} = await import(outfile);
 
 const { ok, finish } = createTestRunner();
 console.log("الاختبارات التكاملية للنسخة المستقلة (sql.js + المخطط الحقيقي)\n");
@@ -791,6 +800,239 @@ await ok("هوية المركز: تطبيع القيم والنصوص المشت
     throw new Error("يجب عدم تكرار الهوية في قالب يملك ترويسة مخصصة");
   }
   centerBrand.setActiveCenterIdentity(centerBrand.DEFAULT_CENTER_IDENTITY);
+});
+
+// ============================================================
+// 10) استيراد Excel للسجل الشامل (كل الأعوام)
+// ============================================================
+
+await ok("استيراد Excel: تطبيع الأعوام ومطابقة الرؤوس", async () => {
+  const cases = [
+    ["1447", "1447"],
+    ["1447D", "1447D"],
+    ["1447 ذ.ح", "1447D"],
+    ["1447هـ · عشر ذي الحجة", "1447D"],
+    [" 1446 ", "1446"],
+    ["بلا عام", null],
+    ["", null],
+  ];
+  for (const [input, expected] of cases) {
+    const got = studentImport.normalizeYearToken(input);
+    if (got !== expected) {
+      throw new Error(`تطبيع العام «${input}» أعطى ${got} بدل ${expected}`);
+    }
+  }
+
+  const parsedYears = studentImport.parseRegisteredYears("1445، 1441, 1445 , 1447 ذ.ح");
+  if (parsedYears.join("|") !== "1441|1445|1447D") {
+    throw new Error(`تحليل الأعوام غير متوقع: ${parsedYears.join("|")}`);
+  }
+
+  if (studentImport.matchColumn("الأعوام المسجل بها").kind !== "field") {
+    throw new Error("عنوان «الأعوام المسجل بها» يجب أن يُطابق حقلاً معروفاً");
+  }
+  if (studentImport.matchColumn("الحفظ التراكمي (آخر عام)").kind !== "field") {
+    throw new Error("عنوان «الحفظ التراكمي (آخر عام)» يجب أن يُطابق حقلاً معروفاً");
+  }
+  if (studentImport.matchColumn("اسم الطالبة").kind !== "ignored") {
+    throw new Error("عنوان مجهول يجب أن يُتجاهل");
+  }
+  const customCols = [{ id: "col-sheba", name: "الشعبة" }];
+  const customMatch = studentImport.matchColumn("الشعبة", customCols);
+  if (customMatch.kind !== "custom" || customMatch.id !== "col-sheba") {
+    throw new Error("عنوان العمود المخصص لم يُطابق معرّف العمود");
+  }
+
+  const template = studentImport.buildStudentImportTemplate(customCols);
+  if (!template.headers.includes("اسم الطالب") || !template.headers.includes("الشعبة")) {
+    throw new Error("القالب يجب أن يحمل رؤوس السجل الشامل + الأعمدة المخصصة");
+  }
+  if (template.headers.length !== studentImport.STUDENT_IMPORT_HEADERS.length + 1) {
+    throw new Error("عدد رؤوس القالب غير متوقع");
+  }
+  if (studentImport.STUDENT_IMPORT_INSTRUCTIONS.length < 5) {
+    throw new Error("يجب توفير إرشادات استيراد واضحة للمستخدم");
+  }
+});
+
+await ok("استيراد Excel: تحليل الصفوف (تجاهل الفراغ، دمج المكرر، الأعمدة المخصصة)", async () => {
+  const customCols = [{ id: "col-sheba", name: "الشعبة" }];
+  const { rows, errors, skippedRows, mergedRows } = studentImport.parseStudentRows(
+    [
+      {
+        "اسم الطالب": "  فاطمة أحمد  ",
+        الجنس: "أنثى",
+        "الأعوام المسجل بها": "1441، 1445",
+        "الحفظ التراكمي (آخر عام)": "18",
+        الشعبة: "أ",
+        "عمود مجهول": "x",
+        "رقم القيد": "999",
+      },
+      // اسم مكرر بعد التطبيع: يكمل الفراغات فقط ولا يدهس القيم الأولى
+      { "اسم الطالب": "فاطمه  احمد", "رقم ولي الأمر": "770001111", الشعبة: "ب" },
+      // بلا اسم لكن فيه قيمة: صف مرفوض برسالة واضحة
+      { "اسم الطالب": "", "رقم ولي الأمر": "770002222" },
+      // صف فارغ تماماً: يُتجاهل بصمت
+      { "اسم الطالب": "", الجنس: "" },
+      // أعمدة غير معروفة فقط: صف مرفوض برسالة عناوين
+      { "عمود مجهول": "x" },
+      { "اسم الطالب": "مريم محمد", "الأعوام المسجل بها": "1447 ذ.ح" },
+    ],
+    customCols,
+  );
+
+  if (rows.length !== 2) throw new Error(`عدد السجلات ${rows.length} بدل 2`);
+  if (errors.length !== 2) throw new Error(`عدد الأخطاء ${errors.length} بدل 2`);
+  if (skippedRows !== 2) throw new Error(`عدد الصفوف المتخطاة ${skippedRows} بدل 2`);
+  if (!errors.some((e) => e.includes("لا يوجد اسم طالب"))) {
+    throw new Error(`لا رسالة عن صف بلا اسم: ${errors.join(" / ")}`);
+  }
+  if (!errors.some((e) => e.includes("لا يوجد عمود معروف"))) {
+    throw new Error(`لا رسالة عن أعمدة غير معروفة: ${errors.join(" / ")}`);
+  }
+  if (mergedRows !== 1) throw new Error(`عدد الصفوف المدمجة ${mergedRows} بدل 1`);
+
+  const fatima = rows[0];
+  if (fatima.name !== "فاطمة أحمد") throw new Error("الاسم لم يُنظّف من المسافات");
+  if (fatima.gender !== "أنثى") throw new Error("الجنس لم يُقرأ");
+  if (fatima.registered_years.join("|") !== "1441|1445") throw new Error("الأعوام لم تُقرأ");
+  if (fatima.latest_total_hifz !== "18") throw new Error("الحفظ التراكمي لم يُقرأ");
+  if (fatima.custom_fields["col-sheba"] !== "أ") {
+    throw new Error("العمود المخصص لم يُقرأ أو دُهست قيمته بالتكرار");
+  }
+  if (fatima.guardian_phone !== "770001111") throw new Error("الصف المكرر لم يكمل الفراغات");
+  if (fatima.mergedFrom.length !== 1) throw new Error("لم يُسجّل الصف المدمج");
+  if ("رقم القيد" in fatima) throw new Error("رقم القيد يجب ألا يُستخدم كمفتاح");
+
+  const maryam = rows[1];
+  if (maryam.registered_years.join("|") !== "1447D") {
+    throw new Error(`عام ذي الحجة لم يُحوّل: ${maryam.registered_years.join("|")}`);
+  }
+});
+
+await ok("استيراد Excel: تحديث المطابق بالاسم وإنشاء الجديد وتسجيل الأعوام", async () => {
+  await loginAs(ownerEmail, "owner-pass-789");
+
+  // عمود مخصص محفوظ للحساب — يجب أن يُستورد بعنوانه
+  await storage.saveCustomColumns([{ id: "col-sheba", name: "الشعبة" }]);
+
+  // طالب موجود مسبقاً ببيانات يدوية يجب ألا تُدهس
+  const manualId = await storage.saveStudent({
+    name: "طالبة الاستيراد اليدوية",
+    teacher: "معلمة الاستيراد",
+    notes: "ملاحظة يدوية",
+  });
+  await storage.saveYearData("1447", manualId, {
+    baseHifz: "4",
+    totalHifz: "12",
+    parts: "2",
+    annual: "",
+    recitation: "36",
+    memorization: "34",
+    total: "85",
+    grade: "جيد جداً",
+    prize: "0",
+    statusPrize: "",
+    rank: "2",
+    teacher: "معلمة الاستيراد",
+  });
+
+  const result = await studentImport.importStudentsFromRows(
+    [
+      {
+        "اسم الطالب": "طالبه الاستيراد اليدويه",
+        "رقم الطالب": "733333333",
+        "الأعوام المسجل بها": "1446، 1448",
+        "الحفظ التراكمي (آخر عام)": "21",
+        الشعبة: "ب",
+      },
+      {
+        "اسم الطالب": "سلمى صالح",
+        الجنس: "أنثى",
+        "الأعوام المسجل بها": "1448",
+        "الحفظ التراكمي (آخر عام)": "7",
+        الحالة: "يتيمة",
+      },
+    ],
+    [{ id: "col-sheba", name: "الشعبة" }],
+  );
+
+  if (result.imported !== 1 || result.updated !== 1 || result.skipped !== 0) {
+    throw new Error(
+      `نتيجة الاستيراد غير متوقعة: جديد ${result.imported} | محدَّث ${result.updated} | متخطى ${result.skipped}`,
+    );
+  }
+  if (result.errors.length !== 0) throw new Error(`أخطاء غير متوقعة: ${result.errors.join(" / ")}`);
+  if (result.total !== 2) throw new Error(`إجمالي الصفوف ${result.total} بدل 2`);
+
+  const all = await storage.loadGlobalStudentsWithYears();
+
+  if (all.filter((s) => s.name === "طالبة الاستيراد اليدوية").length !== 1) {
+    throw new Error("الاستيراد أنشأ سجلاً مكرراً بدل تحديث المطابق بالاسم");
+  }
+  const existing = all.find((s) => s.id === manualId);
+  if (!existing) throw new Error("سجل الاستيراد اليدوي اختفى");
+  if (existing.name !== "طالبة الاستيراد اليدوية") {
+    throw new Error("اسم السجل تغيّر إلى صيغة الملف بدل إبقاء الاسم الأصلي");
+  }
+  if (existing.student_phone !== "733333333")
+    throw new Error("البيانات الجديدة لم تُضف للمطابق بالاسم");
+  if (existing.notes !== "ملاحظة يدوية") throw new Error("البيانات اليدوية دُهست بالاستيراد");
+  if (existing.custom_fields["col-sheba"] !== "ب") throw new Error("العمود المخصص لم يُحدَّث");
+  const years = (existing.registered_years || []).map((y) => y.replace(/D$/, ""));
+  if (!years.includes("1446") || !years.includes("1448") || !years.includes("1447")) {
+    throw new Error(`الأعوام المسجل بها غير متوقعة: ${years.join("|")}`);
+  }
+  if (existing.latest_total_hifz !== "21") {
+    throw new Error(`الحفظ التراكمي ${existing.latest_total_hifz} بدل 21`);
+  }
+  // بيانات العام الأصلي لم تُمس
+  const originalYear = await storage.loadYearData("1447", existing.id);
+  if (originalYear.teacher !== "معلمة الاستيراد" || originalYear.total !== "85") {
+    throw new Error("بيانات العام الأصلي تأثرت بالاستيراد");
+  }
+  const newYear = await storage.loadYearData("1448", existing.id);
+  if (newYear.totalHifz !== "21") throw new Error("الحفظ التراكمي لم يُكتب في آخر عام بالملف");
+
+  const created = all.find((s) => s.name === "سلمى صالح");
+  if (!created) throw new Error("الطالب الجديد لم يُنشأ");
+  if (created.status !== "يتيمة") throw new Error("حالة «يتيمة» لم تُحفظ");
+  if ((created.registered_years || []).join("|") !== "1448") {
+    throw new Error(`أعوام الطالبة الجديدة: ${(created.registered_years || []).join("|")}`);
+  }
+  if (created.latest_total_hifz !== "7") throw new Error("حفظ الطالبة الجديدة غير صحيح");
+});
+
+await ok("استيراد Excel: العزل بين الحسابات + الملخص العربي", async () => {
+  await loginAs(adminEmail, "admin-pass-123");
+  const adminStudents = await storage.loadGlobalStudentsWithYears();
+  if (adminStudents.some((s) => s.name === "سلمى صالح")) {
+    throw new Error("بيانات مستوردة تسرّبت إلى حساب آخر");
+  }
+
+  const summary = studentImport.studentImportSummary({
+    imported: 2,
+    updated: 3,
+    skipped: 1,
+    mergedDuplicates: 1,
+    errors: [],
+    total: 7,
+  });
+  if (!summary.includes("جديد: 2") || !summary.includes("محدَّث: 3")) {
+    throw new Error(`ملخص الاستيراد غير متوقع: ${summary}`);
+  }
+  if (
+    studentImport.studentImportSummary({
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      mergedDuplicates: 0,
+      errors: [],
+      total: 0,
+    }) !== "لا تغييرات"
+  ) {
+    throw new Error("ملخص بلا تغييرات يجب أن يكون صريحاً");
+  }
 });
 
 finish("الاختبارات التكاملية");
