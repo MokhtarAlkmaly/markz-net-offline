@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Plus, Printer, Save, ScrollText, Trash2, Wand2 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
 import {
   deleteCertificateLocal,
   saveCertificate,
@@ -218,8 +218,8 @@ export function TeacherCertificatesTab({
   const certHtml = (certificate: CertificateRow) => `
     <div class="cert">
       <div class="frame">
-        <img class="logo" src="${new URL(logo, window.location.origin).href}" alt="" />
-        <div class="kicker">${esc(BRAND_PRINT_TITLE)}</div>
+        <img class="logo" src="${new URL(activeCenterLogoSrc(logo), window.location.origin).href}" alt="" />
+        <div class="kicker">${esc(activeCenterPrintTitle())}</div>
         <div class="title">${esc(certificate.title || CERT_TYPES[certificate.cert_type] || "شهادة تقدير")}</div>
         <div class="rule"></div>
         <div class="pre">تُمنح هذه الشهادة إلى</div>

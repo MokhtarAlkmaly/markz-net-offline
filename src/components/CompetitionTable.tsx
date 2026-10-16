@@ -7,7 +7,7 @@ import { TableFilters } from "./table/TableFilters";
 import { calculateGrade, resolveBaseHifz } from "@/utils/calculations";
 import { getDuplicateNameCounts, getDuplicateCountFor } from "@/utils/studentNames";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
 import { getTableFilters, setTableFilters } from "@/utils/storage";
 
 interface DirtyData {
@@ -396,8 +396,8 @@ export const CompetitionTable = ({
         @media print { body { padding: 10px; } @page { size: landscape; margin: 10mm; } }
       </style></head><body>
         <div class="header">
-          <img src="${logo}" alt="الشعار" />
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
+          <h1>${activeCenterPrintTitle()}</h1>
           <h2>كشف ${competitionLabel} - ${currentYear}هـ</h2>
         </div>
         <div class="filter-info"><strong>التصفية:</strong> ${getFilterDescription()}</div>

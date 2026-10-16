@@ -5,11 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Home, Loader2, Printer, Share2, Sparkles, Search as SearchIcon } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { loadKhatimat, KhatimEntry } from "@/utils/storage";
 import { printHtml, esc } from "@/utils/report";
 
 const Khatimat = () => {
+  const centerBrand = useCenterBrand();
   const [entries, setEntries] = useState<KhatimEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -36,9 +38,9 @@ const Khatimat = () => {
 
   const buildBody = () => `
     <div class="head">
-      <img src="${logo}" class="logo" />
+      <img src="${activeCenterLogoSrc(logo)}" class="logo" />
       <div>
-        <h1>${BRAND_PRINT_TITLE}</h1>
+        <h1>${activeCenterPrintTitle()}</h1>
         <div class="sub">كشف الخاتمين والخاتمات — إجمالي ${entries.length} طالب/ة</div>
       </div>
     </div>
@@ -83,7 +85,11 @@ const Khatimat = () => {
       <div className="mx-auto max-w-5xl space-y-4">
         <Card className="flex flex-wrap items-center justify-between gap-3 border-primary/20 p-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="شعار المركز" className="h-12 w-12 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="flex items-center gap-1.5 text-lg font-bold text-primary">
                 <Sparkles className="h-4 w-4 text-amber-500" /> كشف الخاتمين والخاتمات

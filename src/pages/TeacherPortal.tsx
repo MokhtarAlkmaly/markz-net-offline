@@ -26,7 +26,8 @@ import { useSearchParams } from "@/lib/router-compat";
 import { calcPagesBetweenAsync } from "@/utils/quranData";
 import { formatYearKey } from "@/types/student";
 import { TRACKING_MONTHS } from "@/types/student";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
 import {
   PortalView,
   PortalForm,
@@ -175,6 +176,7 @@ const StudentCard = ({
 
 const TeacherPortal = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [searchParams] = useSearchParams();
   const code = (searchParams.get("t") || "").trim();
   const urlYear = searchParams.get("y") || "";
@@ -373,15 +375,15 @@ const TeacherPortal = () => {
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <div className="rounded-2xl bg-white/95 p-1.5 shadow-lg ring-2 ring-amber-400/30">
             <img
-              src={logo}
-              alt="Markz Net — نسخة بلا إنترنت"
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
               className="h-11 w-11 object-contain"
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300">
               <Link2 className="h-3 w-3" />
-              بوابة المعلم/ة · Markz Net — نسخة بلا إنترنت
+              بوابة المعلم/ة · {centerBrand.name} — {BRAND_NAME_TAGGED}
             </p>
             <h1 className="truncate text-lg font-black text-white">
               متابعة {monthLabel} · {yearLabel}
@@ -419,9 +421,7 @@ const TeacherPortal = () => {
           />
         ))}
 
-        <p className="pt-2 text-center text-[10px] text-white/30">
-          Markz Net — نسخة بلا إنترنت · قسم القرآن الكريم
-        </p>
+        <p className="pt-2 text-center text-[10px] text-white/30">{centerBrand.headerLine}</p>
       </main>
     </div>
   );

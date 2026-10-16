@@ -26,9 +26,9 @@ import {
   ArrowRight,
   GraduationCap,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
 import { OfflineBadge } from "@/components/OfflineBadge";
-import { BRAND_HEADER, BRAND_SUPERVISOR } from "@/lib/brand";
+import { BRAND_NAME_TAGGED, BRAND_SECTION } from "@/lib/brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { Student, HifzHistory, YearData, START_YEAR, END_YEAR } from "@/types/student";
 import {
   loadAllStudentsWithData,
@@ -83,6 +83,7 @@ const Competition = () => {
   const [dirtyMap, setDirtyMap] = useState<Record<number, DirtyData>>({});
   const [teacherNames, setTeacherNames] = useState<string[]>([]);
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const { user } = useAuth();
 
   const isDirty = Object.keys(dirtyMap).length > 0;
@@ -353,8 +354,8 @@ const Competition = () => {
             <div className="flex items-center gap-3">
               <div className="rounded-3xl bg-white/95 p-2 shadow-xl shadow-black/10 ring-1 ring-white/40">
                 <img
-                  src={logo}
-                  alt="Markz Net — نسخة بلا إنترنت"
+                  src={centerBrand.logoUrl}
+                  alt={centerBrand.name}
                   className="h-16 w-16 object-contain sm:h-20 sm:w-20"
                 />
               </div>
@@ -383,7 +384,8 @@ const Competition = () => {
                   كشف {competitionLabel}
                 </h1>
                 <p className="mt-1 text-sm text-white/75 sm:text-base">
-                  {BRAND_HEADER} · {BRAND_SUPERVISOR}
+                  {centerBrand.name} — {BRAND_NAME_TAGGED} · {BRAND_SECTION} ·{" "}
+                  {centerBrand.identity.supervisor}
                 </p>
               </div>
             </div>

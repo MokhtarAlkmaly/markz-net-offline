@@ -1,4 +1,4 @@
-import { BRAND_NAME, BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterName, activeCenterPrintTitle } from "@/lib/center-brand";
 import { esc } from "@/utils/report";
 import {
   type ExamPaper,
@@ -33,7 +33,7 @@ const questionItem = (q: PaperQuestion) => `
 /** ورقة نموذج كاملة: ترويسة + بيانات الطالب + الأسئلة */
 export const buildPaperHtml = (paper: ExamPaper, year: string): string => `
     <div class="paper">
-      <div class="center">${esc(BRAND_PRINT_TITLE)}</div>
+      <div class="center">${esc(activeCenterPrintTitle())}</div>
       <h2 style="border:0;text-align:center;margin:4px 0">اختبار حفظ القرآن الكريم</h2>
       <div class="meta">
         العام ${esc(year)}هـ — فئة الحفظ: ${esc(paper.categoryLabel)} (${esc(paper.rangeLabel)})
@@ -54,7 +54,7 @@ export const buildPaperHtml = (paper: ExamPaper, year: string): string => `
       <ol class="qs" start="${paper.questions.length + 1}">
         ${paper.supplements.map((q) => `<li><div>${esc(q.question)}</div><div class="score">${esc(q.reference)} — الدرجة: ( ...... ) من 10</div><div>الإجابة: ....................................................................</div></li>`).join("")}
       </ol>
-      <div class="thanks">وفّقكم الله — إدارة ${esc(BRAND_NAME)}</div>
+      <div class="thanks">وفّقكم الله — إدارة ${esc(activeCenterName())}</div>
     </div>`;
 
 /** كل النماذج في مستند واحد، كل نموذج في صفحة مستقلة */
@@ -64,7 +64,7 @@ export const buildPapersHtml = (papers: ExamPaper[], year: string): string =>
 /** مفتاح التصحيح: مرجع كل سؤال (السورة والآيات والجزء والصفحة وطول المقطع) */
 export const buildAnswerKeyHtml = (papers: ExamPaper[], year: string): string => `
     <div class="paper">
-      <div class="center">${esc(BRAND_PRINT_TITLE)}</div>
+      <div class="center">${esc(activeCenterPrintTitle())}</div>
       <h2 style="border:0;text-align:center;margin:4px 0">مفتاح تصحيح أسئلة الحفظ</h2>
       <div class="meta">العام ${esc(year)}هـ — فئة الحفظ: ${esc(papers[0]?.categoryLabel ?? "")} — ${papers.length} نماذج</div>
       <table>

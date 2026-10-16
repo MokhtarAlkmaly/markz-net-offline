@@ -28,9 +28,10 @@ import {
   Sparkles,
   Plus,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
 import { OfflineBadge } from "@/components/OfflineBadge";
-import { BRAND_HEADER, BRAND_SIGNATURE } from "@/lib/brand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
+import { centerSignatureLine, centerSupervisor } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { Student, CustomColumnDef, DEFAULT_STATUSES, GENDER_OPTIONS } from "@/types/student";
 import { DEFAULT_SCHOOL_GRADES } from "@/utils/schoolGrades";
 import {
@@ -63,6 +64,7 @@ const Index = () => {
 
   const { toast } = useToast();
   const { signOut } = useAuth();
+  const centerBrand = useCenterBrand();
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -280,8 +282,8 @@ const Index = () => {
                 <div className="flex items-center gap-3">
                   <div className="rounded-3xl bg-white/95 p-2 shadow-xl shadow-black/10 ring-1 ring-white/40">
                     <img
-                      src={logo}
-                      alt="Markz Net — نسخة بلا إنترنت"
+                      src={centerBrand.logoUrl}
+                      alt={centerBrand.name}
                       className="h-16 w-16 object-contain sm:h-20 sm:w-20"
                     />
                   </div>
@@ -291,11 +293,14 @@ const Index = () => {
                       السجل العام والملف الشامل
                     </div>
                     <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl text-white">
-                      {BRAND_HEADER}
+                      {centerBrand.name}
                     </h1>
+                    <p className="mt-0.5 text-[11px] font-semibold text-white/70">
+                      {BRAND_NAME_TAGGED}
+                    </p>
                     <p className="mt-1 text-xs text-white/80 sm:text-sm">
-                      السجل الرسمي الموحد لجميع طلاب الحلقات والمسابقات القرآنية · الإشراف - شرعب
-                      الرونة
+                      السجل الرسمي الموحد لجميع طلاب الحلقات والمسابقات القرآنية ·{" "}
+                      {centerSupervisor(centerBrand.identity)}
                     </p>
                   </div>
                 </div>
@@ -526,7 +531,7 @@ const Index = () => {
 
           {/* Footer */}
           <footer className="mt-auto px-4 py-6 text-center text-xs text-muted-foreground">
-            {BRAND_SIGNATURE}
+            {centerSignatureLine(centerBrand.identity)}
           </footer>
         </div>
       </div>

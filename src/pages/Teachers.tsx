@@ -14,8 +14,7 @@ import {
   ScrollText,
   Users,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
-import { BRAND_NAME } from "@/lib/brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import type { Student } from "@/types/student";
 import {
   consolidateTeachers,
@@ -47,6 +46,7 @@ type TeacherTab = "registry" | "monthly" | "annual" | "certificates" | "in_kind"
 const Teachers = () => {
   const { viewAs } = useAuth();
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const readOnly = !!viewAs;
 
   const [loading, setLoading] = useState(true);
@@ -148,8 +148,8 @@ const Teachers = () => {
               </Button>
             </Link>
             <img
-              src={logo}
-              alt={BRAND_NAME}
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
               className="h-14 w-14 rounded-2xl bg-white/95 p-1 object-contain sm:h-16 sm:w-16"
             />
             <div className="w-20" />

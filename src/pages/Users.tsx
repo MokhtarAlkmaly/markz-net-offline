@@ -27,7 +27,7 @@ import {
   Copy,
   Link as LinkIcon,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { listAllUsers, grantAccess, revokeAccess, setUserRole, type AppUser } from "@/utils/users";
 
 /** قراءة رسالة/رمز الخطأ بأمان دون استعمال any. */
@@ -41,6 +41,7 @@ const errInfo = (error: unknown): { message: string; code: string } => {
 
 const Users = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const { user, isAdmin, loading: authLoading, refreshAccess } = useAuth();
 
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -226,7 +227,7 @@ const Users = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="الشعار" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">

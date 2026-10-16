@@ -28,7 +28,7 @@ import {
   Printer,
   Calendar,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { START_YEAR, END_YEAR } from "@/types/student";
 import {
   getActiveYear,
@@ -65,6 +65,7 @@ const emptyForm = {
 
 const Donors = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState("");
   const [donors, setDonors] = useState<Donor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,7 +228,7 @@ const Donors = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="الشعار" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">

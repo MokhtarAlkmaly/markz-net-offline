@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CenterBrandProvider } from "@/hooks/useCenterBrand";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -157,12 +158,16 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </TooltipProvider>
+        {/* هوية المركز (الاسم + الشعار) تُحمَّل مرة واحدة وتوزَّع على كل الصفحات
+            والطباعة، فالتطبيق نفسه يخدم أكثر من مركز بإعداداته الخاصة. */}
+        <CenterBrandProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </TooltipProvider>
+        </CenterBrandProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

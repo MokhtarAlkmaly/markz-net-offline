@@ -30,16 +30,18 @@ import {
   BellRing,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import logo from "@/assets/logo.png";
 import { OfflineBadge } from "@/components/OfflineBadge";
-import { BRAND_NAME, BRAND_NAME_TAGGED, BRAND_OFFLINE_TAG, BRAND_SIGNATURE } from "@/lib/brand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
+import { centerSignatureLine, centerSupervisor } from "@/lib/center-brand";
 import { getCenterSection } from "@/lib/center-sections";
 import { useAuth } from "@/hooks/useAuth";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 
 export const AppSidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { signOut, isAdmin, sharedWithMe, viewAs, setViewAs } = useAuth();
+  const centerBrand = useCenterBrand();
   const pathname = location.pathname || "/";
   const section = getCenterSection(pathname);
 
@@ -303,14 +305,23 @@ export const AppSidebar = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center border-b border-white/10 p-4 text-center">
           <div className="relative mb-2 rounded-2xl bg-white/95 p-2 shadow-lg ring-2 ring-amber-400/30">
-            <img src={logo} alt={BRAND_NAME_TAGGED} className="h-14 w-14 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-14 w-14 object-contain"
+            />
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-300 ring-1 ring-white/15">
             <Sparkles className="h-3 w-3" />
-            {BRAND_NAME} · {BRAND_OFFLINE_TAG}
+            {BRAND_NAME_TAGGED}
           </div>
-          <h2 className="mt-1.5 text-base font-black tracking-tight text-white">{section.title}</h2>
-          <p className="text-[11px] text-white/60">{section.description}</p>
+          <h2 className="mt-1.5 text-base font-black tracking-tight text-white">
+            {centerBrand.name}
+          </h2>
+          <p className="text-[11px] text-white/60">{centerSupervisor(centerBrand.identity)}</p>
+          <p className="mt-0.5 text-[10px] text-white/45">
+            {section.title} — {section.description}
+          </p>
 
           <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
             <OfflineBadge tone="glass" />
@@ -388,7 +399,9 @@ export const AppSidebar = () => {
             <LogOut className="h-4 w-4" />
             <span>تسجيل الخروج</span>
           </Button>
-          <p className="mt-2 text-center text-[10px] text-white/40">{BRAND_SIGNATURE}</p>
+          <p className="mt-2 text-center text-[10px] text-white/40">
+            {centerSignatureLine(centerBrand.identity)}
+          </p>
         </div>
       </aside>
     </>

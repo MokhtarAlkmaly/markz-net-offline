@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, CheckCircle2, Smartphone, Monitor } from "lucide-react";
 import { useNavigate } from "@/lib/router-compat";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -59,7 +60,7 @@ const Install = () => {
                   <Smartphone className="h-12 w-12 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-3xl mb-2">ثبّت «Markz Net — نسخة بلا إنترنت»</CardTitle>
+              <CardTitle className="text-3xl mb-2">ثبّت «{BRAND_NAME_TAGGED}»</CardTitle>
               <CardDescription className="text-lg">
                 نسخة محلية كاملة: تعمل بدون إنترنت، وكل بياناتك تبقى على جهازك
               </CardDescription>

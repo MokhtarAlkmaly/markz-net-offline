@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Download, X } from "lucide-react";
 import { useNavigate } from "@/lib/router-compat";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -76,9 +77,7 @@ export const InstallPrompt = () => {
               <Download className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-sm mb-1">
-                ثبّت «Markz Net — نسخة بلا إنترنت» على جوالك
-              </h3>
+              <h3 className="font-semibold text-sm mb-1">ثبّت «{BRAND_NAME_TAGGED}» على جوالك</h3>
               <p className="text-xs text-muted-foreground mb-3">
                 للوصول السريع، ويعمل بلا إنترنت وبياناته تبقى على جهازك
               </p>

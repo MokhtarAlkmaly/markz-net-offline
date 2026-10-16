@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { activeCenterLogoSrc } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -127,6 +129,7 @@ const currentHijriMonth = () => {
  */
 const OverdueAlertsPage = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
 
   const [year, setYear] = useState("");
   const [month, setMonth] = useState(currentHijriMonth);
@@ -282,7 +285,7 @@ const OverdueAlertsPage = () => {
       buildAlertsPrintBody(visible, {
         year,
         month,
-        logoSrc: logo,
+        logoSrc: activeCenterLogoSrc(logo),
         generatedAt: `تاريخ الإصدار: ${new Date().toLocaleDateString("ar-EG")}`,
       }),
     );
@@ -342,7 +345,11 @@ const OverdueAlertsPage = () => {
       <div className="mx-auto max-w-6xl space-y-4">
         <Card className="flex flex-wrap items-center justify-between gap-3 border-primary/20 p-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="شعار المركز" className="h-12 w-12 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="flex items-center gap-1.5 text-lg font-bold text-primary">
                 <BellRing className="h-4 w-4 text-amber-500" /> المتأخرات والتنبيهات الذكية

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageTitle } from "@/lib/center-brand";
 import MonthlyTrackingSearch from "@/pages/MonthlyTrackingSearch";
 
 export const Route = createFileRoute("/monthly-search")({
   head: () => ({
     meta: [
-      { title: "بحث المتابعة الشهرية | Markz Net — نسخة بلا إنترنت" },
+      { title: pageTitle("بحث المتابعة الشهرية") },
       {
         name: "description",
         content:
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/monthly-search")({
       },
       {
         property: "og:title",
-        content: "بحث المتابعة الشهرية | Markz Net — نسخة بلا إنترنت",
+        content: pageTitle("بحث المتابعة الشهرية"),
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

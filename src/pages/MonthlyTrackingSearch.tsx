@@ -37,7 +37,8 @@ import {
 import { getSurahList, calcPagesBetweenAsync } from "@/utils/quranData";
 import { printHtml, esc } from "@/utils/report";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 
 interface MonthRow {
   month: number;
@@ -53,6 +54,7 @@ const surahName = (n: number | null) => getSurahList().find((s) => s.number === 
 const pointLabel = (p: QuranPoint) => (p.surah ? `${surahName(p.surah)}:${p.ayah}` : "—");
 
 const MonthlyTrackingSearch = () => {
+  const centerBrand = useCenterBrand();
   const [students, setStudents] = useState<Student[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
@@ -189,9 +191,9 @@ const MonthlyTrackingSearch = () => {
 
     return `
       <div class="head">
-        <img src="${logo}" class="logo" />
+        <img src="${activeCenterLogoSrc(logo)}" class="logo" />
         <div>
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <h1>${activeCenterPrintTitle()}</h1>
           <div class="sub">سجل المتابعة الشهرية الشامل خلال عام ${year}هـ</div>
         </div>
       </div>
@@ -237,7 +239,11 @@ const MonthlyTrackingSearch = () => {
       <div className="mx-auto max-w-6xl space-y-4">
         <Card className="flex flex-wrap items-center justify-between gap-3 border-primary/20 p-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="شعار المركز" className="h-12 w-12 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="text-lg font-bold text-primary">بحث المتابعة الشهرية</h1>
               <p className="text-xs text-muted-foreground">

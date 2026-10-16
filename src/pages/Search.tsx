@@ -22,7 +22,8 @@ import {
 import { loadXLSX, saveWorkbook } from "@/utils/excel";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { Student, HifzHistory, YearData, START_YEAR, END_YEAR } from "@/types/student";
 import {
   loadGlobalStudents,
@@ -63,6 +64,7 @@ const emptyYearData = (): YearData => ({
 
 const Search = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [students, setStudents] = useState<Student[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
@@ -278,9 +280,9 @@ const Search = () => {
     const list = activeRows();
     const body = `
       <div class="head">
-        <img src="${logo}" class="logo" />
+        <img src="${activeCenterLogoSrc(logo)}" class="logo" />
         <div>
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <h1>${activeCenterPrintTitle()}</h1>
           <div class="sub">سجل الطالب/ة الشامل خلال جميع الأعوام</div>
         </div>
       </div>
@@ -503,7 +505,11 @@ const Search = () => {
       <div className="mx-auto max-w-6xl space-y-4">
         <Card className="flex flex-wrap items-center justify-between gap-3 border-primary/20 p-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="شعار المركز" className="h-12 w-12 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="text-lg font-bold text-primary">البحث عن طالب/ة</h1>
               <p className="text-xs text-muted-foreground">

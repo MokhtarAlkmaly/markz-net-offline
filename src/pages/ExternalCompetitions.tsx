@@ -32,7 +32,9 @@ import {
   Search,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
 import { Student, START_YEAR, END_YEAR, ExternalCompetition } from "@/types/student";
 import {
   getActiveYear,
@@ -46,6 +48,7 @@ import { esc } from "@/utils/report";
 
 const ExternalCompetitions = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState<string>("1447");
   const [rows, setRows] = useState<ExternalCompetition[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -212,8 +215,8 @@ const ExternalCompetitions = () => {
         @media print{@page{size:A4 landscape;margin:10mm}}
       </style></head><body>
         <div class="header">
-          <img src="${logo}" alt="Markz Net — نسخة بلا إنترنت" />
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <img src="${activeCenterLogoSrc(logo)}" alt="${activeCenterPrintTitle()}" />
+          <h1>${activeCenterPrintTitle()}</h1>
           <h2>كشف مشاركات وتمثيل المركز في المسابقات الخارجية - عام ${esc(currentYear)}هـ</h2>
         </div>
         <table>
@@ -241,7 +244,7 @@ const ExternalCompetitions = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="logo" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">
@@ -250,7 +253,7 @@ const ExternalCompetitions = () => {
               المسابقات القرآنية الخارجية
             </h1>
             <p className="text-sm opacity-90 mt-1">
-              توثيق مشاركات الطلاب في نظام Markz Net — نسخة بلا إنترنت — في المسابقات المحلية
+              توثيق مشاركات الطلاب في {centerBrand.name} ({BRAND_NAME_TAGGED}) في المسابقات المحلية
               والمحافظة والجمهورية والدولية - عام {currentYear}هـ
             </p>
           </div>

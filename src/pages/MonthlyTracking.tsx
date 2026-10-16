@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { RecallStudents } from "@/components/RecallStudents";
 import {
   Student,
@@ -120,6 +121,7 @@ const QuranPointPicker = ({
 
 const MonthlyTracking = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedTeacher, setSelectedTeacher] = useState<string>("الكل");
   const [year, setYear] = useState<string>("");
@@ -345,8 +347,8 @@ const MonthlyTracking = () => {
         @media print{@page{size:A4;margin:12mm}}
       </style></head><body>
         <div class="header">
-          <img src="${logo}" alt="الشعار" />
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
+          <h1>${activeCenterPrintTitle()}</h1>
           <h2>التقرير الشهري لمتابعة الطالب/ة</h2>
         </div>
         <div class="info">
@@ -406,7 +408,11 @@ const MonthlyTracking = () => {
       <div className="mx-auto max-w-6xl space-y-4">
         <Card className="flex flex-wrap items-center justify-between gap-3 border-primary/20 p-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="شعار المركز" className="h-12 w-12 object-contain" />
+            <img
+              src={centerBrand.logoUrl}
+              alt={centerBrand.name}
+              className="h-12 w-12 object-contain"
+            />
             <div>
               <h1 className="text-lg font-bold text-primary">المتابعة الشهرية</h1>
               <p className="text-xs text-muted-foreground">

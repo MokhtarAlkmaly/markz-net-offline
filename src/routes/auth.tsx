@@ -1,18 +1,19 @@
+import { pageTitle } from "@/lib/center-brand";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import Auth from "@/pages/Auth";
 import { useAuth } from "@/hooks/useAuth";
 
-const title = "تسجيل الدخول | Markz Net — نسخة بلا إنترنت";
+const title = () => pageTitle("تسجيل الدخول");
 const description = "الدخول إلى نظام إدارة المسابقة الرمضانية لحفظ القرآن الكريم.";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title },
+      { title: title() },
       { name: "description", content: description },
-      { property: "og:title", content: title },
+      { property: "og:title", content: title() },
       { property: "og:description", content: description },
       { name: "robots", content: "noindex" },
     ],

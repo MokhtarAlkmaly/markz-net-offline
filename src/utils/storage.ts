@@ -8,6 +8,13 @@ import {
 } from "@/types/student";
 import { resolveBaseHifz } from "./calculations";
 import { dedupeTeachersByName, GLOBAL_TEACHER_YEAR } from "@/lib/teacher-registry";
+import {
+  DEFAULT_CENTER_IDENTITY,
+  normalizeCenterIdentity,
+  readDeviceCenterIdentity,
+  writeDeviceCenterIdentity,
+  type CenterIdentity,
+} from "@/lib/center-brand";
 import { getSessionUserId, subscribeAuth } from "./localAuth";
 
 /**
@@ -925,6 +932,48 @@ export const setActiveYear = async (year: string) => {
   if (prefUserId) {
     await setCachedSetting(scopedSettingKey(prefUserId, "active_year"), year);
   }
+};
+
+// ===== هوية المركز (اسم + إشراف + شعار) =====
+/**
+ * هوية المركز خاصة بالحساب (مفتاح `<userId>:center_identity`) وتُخزَّن محلياً.
+ * وتُكتب معها نسخة خفيفة في localStorage (انظر center-brand) لتظهر في صفحة
+ * الدخول قبل تسجيل الدخول بلا أي قراءة من قاعدة البيانات.
+ */
+
+/** يقرأ هوية المركز الخاصة بالحساب الحالي (أو المعروض في وضع الاطلاع). */
+export const loadCenterIdentity = async (): Promise<CenterIdentity> => {
+  await ensureCache();
+  const userId = await getUserId();
+  if (!userId) return readDeviceCenterIdentity();
+
+  const stored = await getCachedSetting<Partial<CenterIdentity>>(
+    scopedSettingKey(userId, "center_identity"),
+  );
+  if (stored) return normalizeCenterIdentity(stored);
+  // لم يخصّص هذا الحساب هويته بعد: نعرض هوية المركز المعرَّفة على الجهاز إن وُجدت.
+  return readDeviceCenterIdentity();
+};
+
+/** يحفظ هوية المركز للحساب الحالي، ويكتب نسخة على مستوى الجهاز لصفحة الدخول. */
+export const saveCenterIdentity = async (identity: CenterIdentity): Promise<CenterIdentity> => {
+  guardWrite();
+  const userId = await getUserId();
+  if (!userId) throw new Error("يلزم تسجيل الدخول لحفظ هوية المركز");
+  const normalized = normalizeCenterIdentity(identity);
+  await setCachedSetting(scopedSettingKey(userId, "center_identity"), normalized);
+  writeDeviceCenterIdentity(normalized);
+  return normalized;
+};
+
+/** يعيد هوية المركز إلى الافتراضية (اسم النسخة والشعار المدمج). */
+export const resetCenterIdentity = async (): Promise<CenterIdentity> => {
+  guardWrite();
+  const userId = await getUserId();
+  if (!userId) throw new Error("يلزم تسجيل الدخول لإعادة الهوية الافتراضية");
+  await setCachedSetting(scopedSettingKey(userId, "center_identity"), DEFAULT_CENTER_IDENTITY);
+  writeDeviceCenterIdentity(DEFAULT_CENTER_IDENTITY);
+  return DEFAULT_CENTER_IDENTITY;
 };
 
 export const getTableFilters = async <T>(): Promise<T | undefined> => {

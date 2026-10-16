@@ -33,7 +33,7 @@ import {
   HeartHandshake,
   Search as SearchIcon,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { Student, START_YEAR, END_YEAR } from "@/types/student";
 import { RecallStudents } from "@/components/RecallStudents";
 import {
@@ -101,6 +101,7 @@ const esc = (s: string) =>
 
 const Awards = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState<string>("");
   const [awards, setAwards] = useState<AwardRow[]>([]);
   const [teachers, setTeachers] = useState<string[]>([]);
@@ -473,7 +474,7 @@ const Awards = () => {
                 رجوع
               </Button>
             </Link>
-            <img src={logo} alt="logo" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">
