@@ -1,6 +1,6 @@
 import { TRACKING_MONTHS, type MonthlyRecord, type Student } from "@/types/student";
 import { arabicIncludes } from "@/utils/arabicSearch";
-import { activeCenterPrintTitle } from "@/lib/center-brand";
+import { activeCenterPrintTitle, activeCenterSupervisorLine } from "@/lib/center-brand";
 
 /**
  * منطق «المتأخرات والتنبيهات الذكية» في وحدة نقية بلا أي اعتماد على قاعدة
@@ -534,6 +534,7 @@ export interface AlertsPrintOptions {
   month: number;
   logoSrc?: string;
   centerName?: string;
+  supervisor?: string;
   /** تاريخ الكشف كما يُعرض في الترويسة. */
   generatedAt?: string;
 }
@@ -543,7 +544,14 @@ export interface AlertsPrintOptions {
  * كشوف النظام، ويُمرَّر إلى printHtml. الدالة نقية وتُختبَر مباشرة.
  */
 export function buildAlertsPrintBody(alerts: OverdueAlert[], options: AlertsPrintOptions): string {
-  const { year, month, logoSrc, centerName = activeCenterPrintTitle(), generatedAt = "" } = options;
+  const {
+    year,
+    month,
+    logoSrc,
+    centerName = activeCenterPrintTitle(),
+    supervisor = activeCenterSupervisorLine(),
+    generatedAt = "",
+  } = options;
   const summary = summarizeAlerts(alerts);
   const monthLabel = hijriMonthName(month);
   const escape = (value: string) =>
@@ -596,9 +604,10 @@ export function buildAlertsPrintBody(alerts: OverdueAlert[], options: AlertsPrin
 
   return `
     <div class="head">
-      ${logoSrc ? `<img src="${logoSrc}" class="logo" />` : ""}
+      ${logoSrc ? `<img src="${escape(logoSrc)}" class="logo" />` : ""}
       <div>
         <h1>${escape(centerName)}</h1>
+        <div class="sub">${escape(supervisor)}</div>
         <div class="sub">كشف المتأخرات والتنبيهات — شهر ${escape(monthLabel)} لعام ${escape(baseYear(year))}هـ</div>
         ${generatedAt ? `<div class="sub" style="margin-bottom:6px">${escape(generatedAt)}</div>` : ""}
       </div>

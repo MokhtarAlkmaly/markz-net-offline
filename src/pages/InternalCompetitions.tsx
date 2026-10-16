@@ -32,7 +32,11 @@ import {
   Search,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { BRAND_NAME_TAGGED } from "@/lib/brand";
 import { Student, START_YEAR, END_YEAR, InternalCompetition } from "@/types/student";
@@ -200,6 +204,7 @@ const InternalCompetitions = () => {
         .header{text-align:center;border-bottom:3px double #0e6b3a;padding-bottom:12px;margin-bottom:16px}
         .header img{height:75px}
         .header h1{font-size:22px;color:#0e6b3a;margin:4px 0}
+        .header .supervisor{font-size:12px;color:#777;margin:2px 0 4px}
         .header h2{font-size:15px;color:#555}
         table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
         th,td{border:1px solid #bbb;padding:7px;text-align:center}
@@ -209,8 +214,9 @@ const InternalCompetitions = () => {
         @media print{@page{size:A4 landscape;margin:10mm}}
       </style></head><body>
         <div class="header">
-          <img src="${activeCenterLogoSrc(logo)}" alt="${activeCenterPrintTitle()}" />
-          <h1>${activeCenterPrintTitle()}</h1>
+          <img src="${esc(activeCenterLogoSrc(logo))}" alt="${esc(activeCenterPrintTitle())}" />
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
           <h2>كشف المسابقات الداخلية - عام ${esc(currentYear)}هـ</h2>
         </div>
         <table>

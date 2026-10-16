@@ -61,6 +61,7 @@ import {
   activeCenterLogoSrc,
   activeCenterPrintTitle,
   activeCenterSignatureLine,
+  activeCenterSupervisorLine,
 } from "@/lib/center-brand";
 import {
   GraduationCap,
@@ -473,6 +474,7 @@ export const StudentProfileModal = ({
         .header{text-align:center;border-bottom:3px double #0e6b3a;padding-bottom:12px;margin-bottom:16px}
         .header img{height:70px}
         .header h1{font-size:22px;color:#0e6b3a;margin:6px 0 2px}
+        .header .supervisor{font-size:12px;color:#777;margin:2px 0 4px}
         .header h2{font-size:15px;color:#555}
         .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f4faf6;padding:12px;border-radius:10px;margin-bottom:20px;font-size:13px;border:1px solid #cde3d5}
         .info-grid div strong{color:#0e6b3a}
@@ -485,8 +487,9 @@ export const StudentProfileModal = ({
         @media print{@page{size:A4;margin:12mm}}
       </style></head><body>
         <div class="header">
-          <img src="${activeCenterLogoSrc(logo)}" alt="${activeCenterSignatureLine()}" />
-          <h1>${activeCenterPrintTitle()}</h1>
+          <img src="${esc(activeCenterLogoSrc(logo))}" alt="${esc(activeCenterSignatureLine())}" />
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
           <h2>الملف الأكاديمي الشامل للطالب</h2>
         </div>
 
@@ -565,7 +568,7 @@ export const StudentProfileModal = ({
         </table>
 
         <div class="footer">
-          ${activeCenterSignatureLine()} · طُبع بتاريخ: ${new Date().toLocaleDateString("ar-EG")}
+          ${esc(activeCenterSignatureLine())} · طُبع بتاريخ: ${new Date().toLocaleDateString("ar-EG")}
         </div>
       </body></html>`;
 

@@ -22,7 +22,11 @@ import {
 import { loadXLSX, saveWorkbook } from "@/utils/excel";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { Student, HifzHistory, YearData, START_YEAR, END_YEAR } from "@/types/student";
 import {
@@ -280,9 +284,10 @@ const Search = () => {
     const list = activeRows();
     const body = `
       <div class="head">
-        <img src="${activeCenterLogoSrc(logo)}" class="logo" />
+        <img src="${esc(activeCenterLogoSrc(logo))}" class="logo" />
         <div>
-          <h1>${activeCenterPrintTitle()}</h1>
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <div class="sub">${esc(activeCenterSupervisorLine())}</div>
           <div class="sub">سجل الطالب/ة الشامل خلال جميع الأعوام</div>
         </div>
       </div>

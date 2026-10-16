@@ -13,7 +13,11 @@ import { FileText, Printer } from "lucide-react";
 import { loadYearData, loadHifzHistory } from "@/utils/storage";
 import { resolveBaseHifz, calculateGrade, calculatePrize } from "@/utils/calculations";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 
 interface Props {
@@ -147,8 +151,9 @@ export const StudentReport = ({ student }: Props) => {
         @media print { body { padding: 10px; } }
       </style></head><body>
         <div class="header">
-          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
-          <h1>${activeCenterPrintTitle()}</h1>
+          <img src="${esc(activeCenterLogoSrc(logo))}" alt="الشعار" />
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <p>${esc(activeCenterSupervisorLine())}</p>
           <h2>تقرير المسابقة الرمضانية - ${esc(student.name)}</h2>
         </div>
         <div class="student-info">
@@ -226,6 +231,7 @@ export const StudentReport = ({ student }: Props) => {
               <div className="header">
                 <img src={centerBrand.logoUrl} alt={centerBrand.name} />
                 <h1>{activeCenterPrintTitle()}</h1>
+                <p>{centerBrand.identity.supervisor}</p>
                 <h2>تقرير المسابقة الرمضانية - {student.name}</h2>
               </div>
               <div className="student-info">

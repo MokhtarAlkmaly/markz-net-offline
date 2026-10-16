@@ -7,7 +7,12 @@ import { TableFilters } from "./table/TableFilters";
 import { calculateGrade, resolveBaseHifz } from "@/utils/calculations";
 import { getDuplicateNameCounts, getDuplicateCountFor } from "@/utils/studentNames";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
+import { esc } from "@/utils/report";
 import { getTableFilters, setTableFilters } from "@/utils/storage";
 
 interface DirtyData {
@@ -380,6 +385,7 @@ export const CompetitionTable = ({
         .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #2d7a52; padding-bottom: 12px; }
         .header img { height: 80px; margin-bottom: 8px; }
         .header h1 { font-size: 20px; color: #2d7a52; }
+        .header .supervisor { font-size: 12px; color: #777; margin: 2px 0 4px; }
         .header h2 { font-size: 16px; color: #555; margin-top: 4px; }
         .filter-info { background: #f0f7f3; padding: 10px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
         .filter-info strong { color: #2d7a52; }
@@ -396,9 +402,10 @@ export const CompetitionTable = ({
         @media print { body { padding: 10px; } @page { size: landscape; margin: 10mm; } }
       </style></head><body>
         <div class="header">
-          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
-          <h1>${activeCenterPrintTitle()}</h1>
-          <h2>كشف ${competitionLabel} - ${currentYear}هـ</h2>
+          <img src="${esc(activeCenterLogoSrc(logo))}" alt="الشعار" />
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
+          <h2>كشف ${esc(competitionLabel)} - ${esc(currentYear)}هـ</h2>
         </div>
         <div class="filter-info"><strong>التصفية:</strong> ${getFilterDescription()}</div>
         <div class="count">عدد الطلاب: <strong>${filteredStudents.length}</strong></div>

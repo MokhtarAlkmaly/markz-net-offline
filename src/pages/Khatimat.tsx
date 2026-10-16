@@ -5,7 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Home, Loader2, Printer, Share2, Sparkles, Search as SearchIcon } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { loadKhatimat, KhatimEntry } from "@/utils/storage";
 import { printHtml, esc } from "@/utils/report";
@@ -38,9 +42,10 @@ const Khatimat = () => {
 
   const buildBody = () => `
     <div class="head">
-      <img src="${activeCenterLogoSrc(logo)}" class="logo" />
+      <img src="${esc(activeCenterLogoSrc(logo))}" class="logo" />
       <div>
-        <h1>${activeCenterPrintTitle()}</h1>
+        <h1>${esc(activeCenterPrintTitle())}</h1>
+        <div class="sub">${esc(activeCenterSupervisorLine())}</div>
         <div class="sub">كشف الخاتمين والخاتمات — إجمالي ${entries.length} طالب/ة</div>
       </div>
     </div>

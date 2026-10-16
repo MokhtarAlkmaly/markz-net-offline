@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import defaultLogo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -85,6 +93,7 @@ export const CenterBrandProvider = ({ children }: { children: React.ReactNode })
   const [identity, setIdentity] = useState<CenterIdentity>(() => readDeviceCenterIdentity());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const identityLoadRequest = useRef(0);
 
   const applyIdentity = useCallback((next: CenterIdentity) => {
     const normalized = normalizeCenterIdentity(next);
@@ -94,14 +103,16 @@ export const CenterBrandProvider = ({ children }: { children: React.ReactNode })
   }, []);
 
   const refresh = useCallback(async () => {
+    const requestId = ++identityLoadRequest.current;
     setLoading(true);
     try {
-      applyIdentity(await loadCenterIdentity());
+      const loadedIdentity = await loadCenterIdentity();
+      if (requestId === identityLoadRequest.current) applyIdentity(loadedIdentity);
     } catch (error) {
       console.warn("تعذّر تحميل هوية المركز:", error);
-      applyIdentity(DEFAULT_CENTER_IDENTITY);
+      if (requestId === identityLoadRequest.current) applyIdentity(DEFAULT_CENTER_IDENTITY);
     } finally {
-      setLoading(false);
+      if (requestId === identityLoadRequest.current) setLoading(false);
     }
   }, [applyIdentity]);
 
@@ -126,9 +137,12 @@ export const CenterBrandProvider = ({ children }: { children: React.ReactNode })
 
   const save = useCallback(
     async (next: CenterIdentity) => {
+      const requestId = ++identityLoadRequest.current;
+      setLoading(false);
       setSaving(true);
       try {
-        applyIdentity(await saveCenterIdentity(next));
+        const savedIdentity = await saveCenterIdentity(next);
+        if (requestId === identityLoadRequest.current) applyIdentity(savedIdentity);
       } finally {
         setSaving(false);
       }
@@ -137,9 +151,12 @@ export const CenterBrandProvider = ({ children }: { children: React.ReactNode })
   );
 
   const reset = useCallback(async () => {
+    const requestId = ++identityLoadRequest.current;
+    setLoading(false);
     setSaving(true);
     try {
-      applyIdentity(await resetCenterIdentity());
+      const resetIdentity = await resetCenterIdentity();
+      if (requestId === identityLoadRequest.current) applyIdentity(resetIdentity);
     } finally {
       setSaving(false);
     }
