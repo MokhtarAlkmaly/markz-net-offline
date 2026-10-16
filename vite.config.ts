@@ -6,9 +6,11 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// markz-net نسخة مستقلة تعمل بدون إنترنت: البناء دائماً يُخرج خادم Node.js
-// عاديًا (node-server) يُشغَّل بـ `npm start` على الجهاز نفسه أو ضمن الشبكة
-// المحلية — لا Vercel ولا Cloudflare ولا أي خدمة سحابية.
+// إعداد preset الخاص بـ Nitro:
+// - افتراضياً محلياً: node-server للتشغيل المستقل بدون إنترنت عبر `npm start`.
+// - عند النشر على Vercel (بيئة VERCEL=1) أو تمرير NITRO_PRESET: يُعتمد preset الهدف (مثل "vercel").
+const nitroPreset = process.env.NITRO_PRESET || (process.env.VERCEL ? "vercel" : "node-server");
+
 export default defineConfig({
   // Arena proxies the dev server through a generated preview hostname.
   // Allow that host while still binding Vite on all interfaces.
@@ -26,5 +28,5 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  nitro: { preset: "node-server" },
+  nitro: { preset: nitroPreset },
 });
