@@ -404,7 +404,9 @@ const Settings = () => {
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* البطاقات تُرتَّب عمودين على الشاشات المتوسطة وأربعة عند تثبيت
+            القائمة (xl) حيث تضيق المساحة المتاحة للصفحة */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {settingsSummary.map((item) => {
             const Icon = item.icon;
             return (

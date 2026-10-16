@@ -34,7 +34,8 @@ const ExamQuestions = () => {
       className="min-h-screen bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.14),transparent_34rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--secondary)/0.45))]"
       dir="rtl"
     >
-      <header className="bg-gradient-to-l from-emerald-900 to-teal-800 p-6 pt-16 text-white md:pt-6">
+      {/* pt-16 ينزل بالترويسة تحت زر القائمة العائم (أدنى من 1280px) */}
+      <header className="bg-gradient-to-l from-emerald-900 to-teal-800 p-6 pt-16 text-white xl:pt-6">
         <Link to="/" className="text-sm text-emerald-100">
           ← رجوع لسجل الطلاب
         </Link>
