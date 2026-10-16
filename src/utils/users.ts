@@ -4,7 +4,7 @@
  * داخل قاعدة SQLite على الجهاز نفسه — لا سحابة ولا إنترنت.
  */
 
-import { getDB } from "./sqliteClient";
+import { getDB, persist } from "./sqliteClient";
 import { getSessionUser, listAuthUsers, adminSetPassword, type LocalAuthUser } from "./localAuth";
 
 export interface AppUser {
@@ -105,6 +105,7 @@ export const grantAccess = async (
     [me.id, granteeId, accessLevel, new Date().toISOString()],
     true,
   );
+  persist();
 };
 
 /** سحب إذن الاطلاع من مستخدم. */
@@ -118,6 +119,7 @@ export const revokeAccess = async (granteeId: string): Promise<void> => {
     [me.id, granteeId],
     true,
   );
+  persist();
 };
 
 /** ترقية مستخدم إلى مسؤول أو إنزاله. */
@@ -127,6 +129,7 @@ export const setUserRole = async (userId: string, makeAdmin: boolean): Promise<v
 
   const db = await getDB();
   await db.run(`UPDATE app_users SET is_admin = ? WHERE id = ?`, [makeAdmin ? 1 : 0, userId], true);
+  persist();
 };
 
 /** إعادة تعيين كلمة مرور مستخدم — للمسؤول فقط. */

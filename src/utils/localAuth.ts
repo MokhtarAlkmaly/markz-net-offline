@@ -8,7 +8,7 @@
  *   بلا HTTPS) — لا يخرج أي شيء من الجهاز إطلاقًا.
  */
 
-import { getDB } from "./sqliteClient";
+import { getDB, persist, persistNow } from "./sqliteClient";
 
 // ============================================================
 // الأنواع
@@ -387,6 +387,11 @@ export const signUp = async (input: {
     true,
   );
 
+  // حفظ فوري مضمون قبل العودة: المتصل يقوم عادةً بتنقّل كامل (إعادة تحميل)
+  // مباشرة بعد إنشاء الحساب، وأي حفظ مؤجّل قد لا يكتمل قبل التخلص من الصفحة
+  // فيظهر الإعداد الأولي مجدّدًا وكأن الحساب لم يُنشأ.
+  await persistNow();
+
   const user = rowToUser((await queryUserById(id))!);
   return user;
 };
@@ -437,6 +442,7 @@ export const changeOwnPassword = async (
   const db = await getDB();
   const hash = await hashPassword(newPassword.trim());
   await db.run(`UPDATE app_users SET password_hash = ? WHERE id = ?`, [hash, me.id], true);
+  persist();
 };
 
 /** مسؤول يعيد تعيين كلمة مرور مستخدم آخر (بدون معرفة القديمة). */
@@ -452,6 +458,7 @@ export const adminSetPassword = async (
   const db = await getDB();
   const hash = await hashPassword(newPassword.trim());
   await db.run(`UPDATE app_users SET password_hash = ? WHERE id = ?`, [hash, targetUserId], true);
+  persist();
 };
 
 /** تحديث الاسم الظاهر للحساب الحالي. */
@@ -463,6 +470,7 @@ export const updateDisplayName = async (name: string): Promise<LocalAuthUser> =>
 
   const db = await getDB();
   await db.run(`UPDATE app_users SET display_name = ? WHERE id = ?`, [trimmed, me.id], true);
+  persist();
 
   const row = await queryUserById(me.id);
   cachedSessionUser = row ? rowToUser(row) : null;

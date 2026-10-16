@@ -11,6 +11,7 @@
     "start": "node .output/server/index.mjs",
     "lint": "eslint .",
     "test:db": "node scripts/test-local-db.mjs",
+    "test:auth": "node scripts/test-auth-persist.mjs",
     "test:integration": "node scripts/test-integration.mjs",
     "test:connection": "node scripts/test-connection-recovery.mjs",
     "format": "prettier --write .",

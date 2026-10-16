@@ -23,19 +23,29 @@ export function extractSchemaSql() {
   return m[1];
 }
 
-/** ستُبّ sqliteClient فوق sql.js في الذاكرة (نفس واجهة SQLiteDBConnection المستخدمة). */
+/**
+ * ستُبّ sqliteClient فوق sql.js (نفس واجهة SQLiteDBConnection المستخدمة).
+ *
+ * يحاكي مخزن jeep-sqlite الدائم (IndexedDB على الويب): persist/persistNow
+ * يُصدّران بايتات القاعدة إلى مخزن عام يعيش في globalThis، وgetDB يستردها عند
+ * التهيئة — بحيث يمكن محاكاة «إعادة تحميل الصفحة» باستيراد نسخة جديدة من
+ * الحزمة داخل نفس العملية والتحقق أن البيانات بقيت فعلًا.
+ */
 function sqliteStubSource(schemaSql) {
   return `
 import initSqlJs from "sql.js";
 
 const SCHEMA_SQL = ${JSON.stringify(schemaSql)};
 
+const store = (globalThis.__MARKZ_TEST_SQL_STORE__ ??= new Map());
+
 let dbPromise = null;
 
 async function getSqlite() {
   if (!dbPromise) {
     dbPromise = initSqlJs().then((SQL) => {
-      const db = new SQL.Database();
+      const saved = store.get(DB_NAME);
+      const db = saved ? new SQL.Database(saved) : new SQL.Database();
       db.exec(SCHEMA_SQL);
       return db;
     });
@@ -75,8 +85,11 @@ export const getDB = async () => {
   };
 };
 
-export const persist = async () => {};
-export const persistNow = async () => {};
+export const persist = async () => {
+  const db = await getSqlite();
+  store.set(DB_NAME, db.export());
+};
+export const persistNow = persist;
 `;
 }
 
