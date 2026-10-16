@@ -3,7 +3,7 @@
  * localAuth/users/teacherPortal) في ملف JS واحد قابل للتشغيل داخل Node، مع
  * استبدال طبقة sqliteClient بستُبّ يعمل فوق sql.js في الذاكرة بنفس المخطط
  * الحقيقي المستخرج من src/utils/sqliteClient.ts، واستبدال mediaStore
- * (IndexedDB) بستُبّ فارغ.
+ * (IndexedDB) بحافظة Blob في الذاكرة للاختبار.
  *
  * بهذا تُختبر الشيفرة الفعلية نفسها — لا نسخة معدّلة منها.
  */
@@ -93,16 +93,27 @@ export const persistNow = persist;
 `;
 }
 
-/** ستُبّ mediaStore — لا IndexedDB في Node. */
+/** ستُبّ mediaStore بحافظة Blob في Node بدل IndexedDB الحقيقي. */
 const MEDIA_STUB_SOURCE = `
-export const putMediaFile = async () => {
-  throw new Error("mediaStore: غير متاح في بيئة الاختبار");
+const files = (globalThis.__MARKZ_TEST_MEDIA_FILES__ ??= new Map());
+export const putMediaFile = async (key, file) => {
+  files.set(key, file);
+  return key;
 };
-export const makeMediaKey = () => "test-key";
+export const getMediaFile = async (key) => files.get(key) ?? null;
+export const makeMediaKey = (userId, ext) => {
+  let key;
+  do {
+    key = userId + "/" + Date.now() + "_" + Math.random().toString(36).slice(2) + "." + ext;
+  } while (files.has(key));
+  return key;
+};
 export const getMediaObjectUrl = async () => null;
 export const getMediaObjectUrls = async () => ({});
-export const deleteMediaFile = async () => {};
-export const deleteMediaFiles = async () => {};
+export const deleteMediaFile = async (key) => { files.delete(key); };
+export const deleteMediaFiles = async (keys) => { keys.forEach((key) => files.delete(key)); };
+export const __clearMediaFilesForTests = () => files.clear();
+export const __getMediaFilesForTests = () => files;
 `;
 
 const SQLITE_STUB_ID = "\0virtual:sqlite-client";

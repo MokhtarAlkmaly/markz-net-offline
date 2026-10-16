@@ -50,8 +50,8 @@ export const putMediaFile = async (key: string, file: Blob): Promise<string> => 
 export const makeMediaKey = (userId: string, ext: string) =>
   `${userId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-/** قراءة ملف وإرجاع رابط كائن محلي قابل للعرض، أو null. */
-export const getMediaObjectUrl = async (key: string): Promise<string | null> => {
+/** قراءة الملف نفسه — تستخدمه ميزة النسخ الاحتياطي لتضمين الوسائط في JSON. */
+export const getMediaFile = async (key: string): Promise<Blob | null> => {
   try {
     const db = await openMediaDB();
     const blob = await new Promise<Blob | undefined>((resolve, reject) => {
@@ -60,7 +60,17 @@ export const getMediaObjectUrl = async (key: string): Promise<string | null> => 
       request.onsuccess = () => resolve(request.result as Blob | undefined);
       request.onerror = () => reject(request.error);
     });
-    if (!blob) return null;
+    return blob ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/** قراءة ملف وإرجاع رابط كائن محلي قابل للعرض، أو null. */
+export const getMediaObjectUrl = async (key: string): Promise<string | null> => {
+  const blob = await getMediaFile(key);
+  if (!blob) return null;
+  try {
     return URL.createObjectURL(blob);
   } catch {
     return null;
