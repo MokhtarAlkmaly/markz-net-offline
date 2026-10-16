@@ -44,6 +44,23 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
     المتزامنة التي يحدّثها المزوّد.
 - الدليل: `docs/هوية-المركز-والتخصيص.md`.
 
+## القائمة الجانبية والتخطيط (لا تكرّر نقطة التثبيت)
+
+- نقطة التثبيت **واحدة**: `SIDEBAR_DOCK_BREAKPOINT = 1280` في
+  `src/hooks/useSidebarDock.ts` (الخطاف `useSidebarDock()`)، يقرأها
+  `src/components/AppSidebar.tsx` و`src/routes/_authenticated/route.tsx`.
+- أدنى من 1280px: القائمة **درج** يُغلق باختيار أي صفحة (تأثير على `pathname`)،
+  وبمفتاح `Esc`، وبالنقر على الحاجب، وبزر الإغلاق داخلها، وتُعطَّل بـ `inert`
+  وهي مخفية. لا تكتب تثبيتاً بـ Tailwind (`md:translate-x-0`, `md:hidden`) —
+  الاختبار `npm run test:layout` يفشل إن عادت.
+- حجز المساحة شرطي في التخطيط: `${sidebarDocked ? "mr-72" : ""}` (و`w-72` في
+  القائمة) — لا `md:mr-72`/`lg:mr-72` في أي ملف.
+- مسافات زر الفتح العائم (768–1279px): `pr-12 xl:pr-0` في
+  `CenterSectionTabs.tsx` و`pt-16 xl:pt-6` في `ExamQuestions.tsx`، وبطاقات ملخص
+  الإعدادات `xl:grid-cols-4`.
+- اختبار الانحدار يبني القائمة والتخطيط الحقيقيين ويشغّلهما فوق DOM (jsdom) —
+  البدائل (auth/router/brand) تُعرَّف داخل `scripts/test-layout.mjs` فقط.
+
 ## البنية المحلية
 
 | الملف                           | الدور                                                      |
@@ -59,6 +76,7 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 | `src/utils/communityStorage.ts` | سجل المجتمع (أقسام الرعاية/التدريب) — محلي بالكامل         |
 | `src/utils/examStorage.ts`      | بنك أسئلة الاختبارات — محلي بالكامل                        |
 | `src/utils/quranText.ts`        | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت) |
+| `src/hooks/useSidebarDock.ts`   | نقطة تثبيت القائمة الجانبية (1280px) — مصدر واحد           |
 | `src/lib/center-brand.ts`       | هوية المركز (اسم/إشراف/شعار) + ذاكرة قوالب الطباعة         |
 | `src/hooks/useCenterBrand.tsx`  | مزوّد الهوية لكل الواجهة (`useCenterBrand`)                |
 
@@ -89,6 +107,7 @@ npx tsc --noEmit     # فحص الأنواع
 npm run test:db      # اختبار القاعدة المحلية (sql.js)
 npm run test:integration  # اختبارات تكاملية: مصادقة/صلاحيات/عزل/بوابة معلمين
 npm run test:connection   # انحدار: اعتماد اتصال أصلي موجود (قفلة already exists)
+npm run test:layout       # انحدار: تثبيت القائمة من 1280px + إغلاق الدرج عند الاختيار
 ```
 
 ## عند التعديل

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,14 +36,39 @@ import { centerSignatureLine, centerSupervisor } from "@/lib/center-brand";
 import { getCenterSection } from "@/lib/center-sections";
 import { useAuth } from "@/hooks/useAuth";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
+import { useSidebarDock } from "@/hooks/useSidebarDock";
 
 export const AppSidebar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  // التثبيت يبدأ من 1280px فقط (نقطة واحدة في useSidebarDock تُقرأ هنا وفي
+  // التخطيط). تحتها القائمة «درج» يُغلق، فلا تبقى عالقة فوق المحتوى.
+  const sidebarDocked = useSidebarDock();
   const location = useLocation();
   const { signOut, isAdmin, sharedWithMe, viewAs, setViewAs } = useAuth();
   const centerBrand = useCenterBrand();
   const pathname = location.pathname || "/";
   const section = getCenterSection(pathname);
+  const sidebarOpen = mobileOpen && !sidebarDocked;
+
+  // إغلاق تلقائي عند تغيّر المسار: اختيار أي صفحة من القائمة (أو التنقل من
+  // مكان آخر) يطوي الدرج فوراً بدل أن يبقى مفتوحاً فوق الصفحة الجديدة.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // إغلاق بمفتاح Esc أو عند تثبيت القائمة (تكبير الشاشة أثناء فتح الدرج).
+  useEffect(() => {
+    if (sidebarDocked) {
+      setMobileOpen(false);
+      return;
+    }
+    if (!mobileOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen, sidebarDocked]);
 
   // أصحاب البيانات الذين سمحوا لي بالاطلاع (يُستثنى حسابي أنا).
   const shareableOwners = sharedWithMe;
@@ -274,34 +299,59 @@ export const AppSidebar = () => {
 
   return (
     <>
-      {/* Mobile Menu Trigger Button */}
-      <div className="fixed top-3 right-3 z-50 md:hidden print:hidden">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="h-10 w-10 rounded-2xl bg-emerald-900 text-white shadow-xl hover:bg-emerald-800 p-0 flex items-center justify-center ring-1 ring-white/20"
-          aria-label="القائمة"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      </div>
+      {/* زر فتح الدرج — يظهر فقط حين لا تكون القائمة مثبّتة (أدنى من 1280px) */}
+      {!sidebarDocked && (
+        <div className="fixed top-3 right-3 z-50 print:hidden">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setMobileOpen((open) => !open)}
+            className="h-10 w-10 rounded-2xl bg-emerald-900 text-white shadow-xl hover:bg-emerald-800 p-0 flex items-center justify-center ring-1 ring-white/20"
+            aria-label={sidebarOpen ? "إغلاق القائمة الجانبية" : "فتح القائمة الجانبية"}
+            aria-expanded={sidebarOpen}
+            aria-controls="app-sidebar"
+          >
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+      )}
 
-      {/* Backdrop for mobile */}
-      {mobileOpen && (
+      {/* الحاجب — النقر عليه يغلق الدرج */}
+      {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar container (Right side in RTL) */}
       <aside
-        className={`fixed top-0 right-0 bottom-0 z-40 flex w-72 flex-col bg-gradient-to-b from-emerald-950 via-teal-950 to-slate-950 text-white shadow-2xl transition-transform duration-300 ease-in-out md:translate-x-0 print:hidden border-l border-white/10 ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
+        id="app-sidebar"
+        className={`fixed top-0 right-0 bottom-0 z-40 flex w-72 flex-col bg-gradient-to-b from-emerald-950 via-teal-950 to-slate-950 text-white shadow-2xl transition-transform duration-300 ease-in-out print:hidden border-l border-white/10 ${
+          sidebarOpen || sidebarDocked ? "translate-x-0" : "translate-x-full"
         }`}
         dir="rtl"
+        aria-label="القائمة الجانبية"
+        // وهي مخفية تُعطَّل كلياً (لا تركيز ولا نقر ولا قراءة شاشة) حتى لا تلتقط
+        // التركيز خارج الشاشة. التثبيت من 1280px يُلغي التعطيل.
+        inert={!sidebarDocked && !sidebarOpen}
       >
+        {/* زر إغلاق داخل القائمة — ظاهر في الدرج فقط (أعلى يسار القائمة في RTL) */}
+        {!sidebarDocked && (
+          <div className="absolute top-3 left-3 z-10">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileOpen(false)}
+              className="h-9 w-9 rounded-xl bg-white/10 p-0 text-white hover:bg-white/20"
+              aria-label="إغلاق القائمة الجانبية"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         {/* Header Branding */}
         <div className="flex flex-col items-center border-b border-white/10 p-4 text-center">
           <div className="relative mb-2 rounded-2xl bg-white/95 p-2 shadow-lg ring-2 ring-amber-400/30">

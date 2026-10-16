@@ -17,7 +17,8 @@ export function CenterSectionTabs() {
 
   return (
     <header className="border-b bg-background px-4 pb-3 pt-4 md:px-6 print:hidden">
-      <p className="mb-3 pr-12 text-sm font-bold text-muted-foreground md:pr-0">
+      {/* pr-12 يترك مساحة لزر القائمة العائم (أدنى من 1280px) فلا يغطي النص */}
+      <p className="mb-3 pr-12 text-sm font-bold text-muted-foreground xl:pr-0">
         أقسام {centerBrand.name} — {BRAND_NAME_TAGGED}
       </p>
       <nav aria-label="أقسام المركز" className="overflow-x-auto pb-1">
