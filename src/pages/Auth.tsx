@@ -19,6 +19,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { hasAnyUsers, signIn, signUp } from "@/utils/localAuth";
+import { persistNow } from "@/utils/sqliteClient";
 
 /** مفتاح حفظ آخر بريد استُخدم لتسجيل الدخول على هذا الجهاز. */
 const LAST_EMAIL_KEY = "markznet.lastEmail";
@@ -166,6 +167,9 @@ const Auth = () => {
       }
       // الدخول تلقائي بعد إنشاء الحساب (لا بريد للتأكيد — كل شيء محلي).
       await signIn(normalizedEmail, password.trim());
+      // ضمان اكتمال حفظ قاعدة البيانات قبل التنقّل الكامل (إعادة التحميل)،
+      // حتى لا يُفتح النظام بقاعدة فارغة ويعود لشاشة إعداد المسؤول.
+      await persistNow();
       window.location.replace(nextParam || "/");
     } catch (error: unknown) {
       const message = getErrorMessage(error);
