@@ -323,6 +323,49 @@ CREATE TABLE IF NOT EXISTS monthly_submissions (
 );
 CREATE INDEX IF NOT EXISTS idx_submissions_user ON monthly_submissions(user_id, year, month);
 CREATE INDEX IF NOT EXISTS idx_submissions_portal ON monthly_submissions(portal_id, student_id);
+
+-- سجل المجتمع: برامج قسم الرعاية وقسم التدريب (محلي بالكامل).
+CREATE TABLE IF NOT EXISTS community_records (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  department TEXT NOT NULL,
+  program_id TEXT NOT NULL,
+  beneficiary_name TEXT NOT NULL,
+  beneficiary_type TEXT NOT NULL,
+  phone TEXT,
+  guardian_name TEXT,
+  address TEXT,
+  service_date TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'registered',
+  group_name TEXT,
+  sponsor_name TEXT,
+  amount REAL,
+  currency TEXT,
+  quantity INTEGER,
+  notes TEXT,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_community_owner_dept ON community_records(user_id, department);
+CREATE INDEX IF NOT EXISTS idx_community_owner_dept_date ON community_records(user_id, department, service_date);
+
+-- بنك أسئلة الاختبارات (محلي بالكامل).
+CREATE TABLE IF NOT EXISTS exam_questions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  year TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT '',
+  subject TEXT NOT NULL DEFAULT '',
+  question_type TEXT NOT NULL DEFAULT 'mcq',
+  question TEXT NOT NULL DEFAULT '',
+  choices TEXT,
+  correct_answer TEXT,
+  difficulty TEXT NOT NULL DEFAULT 'متوسط',
+  notes TEXT,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_exam_owner_year ON exam_questions(user_id, year);
 `;
 
 const MIGRATE_STUDENTS_COLS = [

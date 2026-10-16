@@ -5,6 +5,8 @@
  */
 
 import type { capSQLiteSet } from "@capacitor-community/sqlite";
+import type { CommunityRecordRow } from "@/lib/community-records";
+import type { ExamQuestionRow } from "@/lib/exam-questions";
 import { getDB, persist } from "./sqliteClient";
 
 const STORES = {
@@ -26,6 +28,8 @@ const STORES = {
   monthlyTracking: "monthly_tracking",
   teacherPortals: "teacher_portals",
   submissions: "monthly_submissions",
+  communityRecords: "community_records",
+  examQuestions: "exam_questions",
 } as const;
 
 // ========== سجلّ الجداول ==========
@@ -333,6 +337,48 @@ const TABLES: Record<string, TableConfig> = {
       "teacher_name",
       "review_note",
       "reviewed_at",
+      "created_at",
+      "updated_at",
+    ],
+    pk: ["id"],
+  },
+  [STORES.communityRecords]: {
+    columns: [
+      "id",
+      "user_id",
+      "department",
+      "program_id",
+      "beneficiary_name",
+      "beneficiary_type",
+      "phone",
+      "guardian_name",
+      "address",
+      "service_date",
+      "status",
+      "group_name",
+      "sponsor_name",
+      "amount",
+      "currency",
+      "quantity",
+      "notes",
+      "created_at",
+      "updated_at",
+    ],
+    pk: ["id"],
+  },
+  [STORES.examQuestions]: {
+    columns: [
+      "id",
+      "user_id",
+      "year",
+      "category",
+      "subject",
+      "question_type",
+      "question",
+      "choices",
+      "correct_answer",
+      "difficulty",
+      "notes",
       "created_at",
       "updated_at",
     ],
@@ -699,6 +745,63 @@ export const getCachedMediaItem = (id: string) => getItem<CachedMedia>(STORES.me
 export const putCachedMedia = (row: CachedMedia) => putItem(STORES.media, row);
 export const deleteCachedMedia = (id: string) => deleteItem(STORES.media, id);
 
+// ========== سجل المجتمع (community_records) ==========
+
+export type CachedCommunityRecord = CommunityRecordRow;
+
+export const cacheCommunityRecords = (rows: CachedCommunityRecord[]) =>
+  cacheRecords(STORES.communityRecords, rows);
+export const getCachedCommunityRecords = () =>
+  getAllItems<CachedCommunityRecord>(STORES.communityRecords);
+export const getCachedCommunityRecord = (id: string) =>
+  getItem<CachedCommunityRecord>(STORES.communityRecords, id);
+export const putCachedCommunityRecord = (row: CachedCommunityRecord) =>
+  putItem(STORES.communityRecords, row);
+export const deleteCachedCommunityRecord = (id: string) => deleteItem(STORES.communityRecords, id);
+
+/** سجلات قسم واحد لمالك واحد — استعلام محلي مفهرس. */
+export const getCachedCommunityRecordsForDepartment = async (
+  userId: string,
+  department: string,
+): Promise<CachedCommunityRecord[]> => {
+  const db = await getDB();
+  const res = await db.query(
+    `SELECT * FROM ${STORES.communityRecords} WHERE user_id = ? AND department = ?`,
+    [userId, department],
+  );
+  return (res.values ?? []).map(
+    (row) => fromRow(TABLES[STORES.communityRecords], row) as CachedCommunityRecord,
+  );
+};
+
+// ========== بنك الأسئلة (exam_questions) ==========
+
+export type CachedExamQuestion = ExamQuestionRow;
+
+export const cacheExamQuestions = (rows: CachedExamQuestion[]) =>
+  cacheRecords(STORES.examQuestions, rows);
+export const getCachedExamQuestions = () => getAllItems<CachedExamQuestion>(STORES.examQuestions);
+export const getCachedExamQuestion = (id: string) =>
+  getItem<CachedExamQuestion>(STORES.examQuestions, id);
+export const putCachedExamQuestion = (row: CachedExamQuestion) =>
+  putItem(STORES.examQuestions, row);
+export const deleteCachedExamQuestion = (id: string) => deleteItem(STORES.examQuestions, id);
+
+/** أسئلة عام واحد لمالك واحد — استعلام محلي مفهرس. */
+export const getCachedExamQuestionsForYear = async (
+  userId: string,
+  year: string,
+): Promise<CachedExamQuestion[]> => {
+  const db = await getDB();
+  const res = await db.query(
+    `SELECT * FROM ${STORES.examQuestions} WHERE user_id = ? AND year = ?`,
+    [userId, year],
+  );
+  return (res.values ?? []).map(
+    (row) => fromRow(TABLES[STORES.examQuestions], row) as CachedExamQuestion,
+  );
+};
+
 // ========== Settings ==========
 
 export const setCachedSetting = async (key: string, value: unknown) => {
@@ -753,7 +856,9 @@ export type PendingEntity =
   | "certificate"
   | "internal_competition"
   | "external_competition"
-  | "media";
+  | "media"
+  | "community_record"
+  | "exam_question";
 
 export type PendingChange = {
   key: string;
@@ -1153,6 +1258,8 @@ export const deleteAllRowsForUser = async (userId: string) => {
   push(`DELETE FROM ${STORES.ceremonyExpenses} WHERE user_id = ?`, [userId]);
   push(`DELETE FROM ${STORES.certificates} WHERE user_id = ?`, [userId]);
   push(`DELETE FROM ${STORES.media} WHERE user_id = ?`, [userId]);
+  push(`DELETE FROM ${STORES.communityRecords} WHERE user_id = ?`, [userId]);
+  push(`DELETE FROM ${STORES.examQuestions} WHERE user_id = ?`, [userId]);
 
   // إعدادات المستخدم (مفاتيح مقيدة بالمعرف) — تبقى إعدادات غيره كما هي.
   push(`DELETE FROM ${STORES.settings} WHERE key LIKE ?`, [`${userId}:%`]);
