@@ -12,6 +12,7 @@
  */
 
 import type {
+  CapacitorSQLitePlugin,
   SQLiteConnection as SQLiteConnectionType,
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
@@ -338,6 +339,14 @@ const MIGRATE_STUDENTS_COLS = [
 ];
 
 let sqliteConn: SQLiteConnectionType | null = null;
+let sqlitePlugin: CapacitorSQLitePlugin | null = null;
+/** مُنشئ SQLiteDBConnection — نحتفظ به لاعتماد اتصال أصلي موجود مسبقًا (انظر acquireConnection). */
+type SQLiteDBConnectionCtor = new (
+  dbName: string,
+  readOnly: boolean,
+  sqlite: CapacitorSQLitePlugin,
+) => SQLiteDBConnection;
+let dbConnectionCtor: SQLiteDBConnectionCtor | null = null;
 let dbConn: SQLiteDBConnection | null = null;
 let initPromise: Promise<SQLiteDBConnection> | null = null;
 let platformCache: string | null = null;
@@ -470,6 +479,87 @@ const bindLifecycleFlush = () => {
   });
 };
 
+/** ينشئ غلاف SQLiteConnection مرة واحدة فقط ويعيد استخدامه في كل المحاولات. */
+const ensureSqlite = async (): Promise<SQLiteConnectionType> => {
+  if (sqliteConn) return sqliteConn;
+  const { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } =
+    await import("@capacitor-community/sqlite");
+  sqlitePlugin = CapacitorSQLite;
+  dbConnectionCtor = SQLiteDBConnection as unknown as SQLiteDBConnectionCtor;
+  sqliteConn = new SQLiteConnection(CapacitorSQLite);
+  return sqliteConn;
+};
+
+/**
+ * يعتمد اتصالًا موجودًا بالفعل في الطبقة الأصلية (أندرويد/iOS) بدلًا من الفشل.
+ *
+ * لماذا نحتاجها: فحص `isConnection` في غلاف جافاسكربت ينظر إلى سجلّ الغلاف نفسه
+ * فقط، بينما رفض `createConnection` يأتي من السجلّ الأصلي (Native). بعد إعادة
+ * تحميل WebView (مثل Live Reload أثناء التطوير) أو بعد محاولة تهيئة فشلت في
+ * المنتصف، يكون سجلّ جافاسكربت فارغًا والسجلّ الأصلي محتفظًا بالاتصال — فتظهر رسالة
+ * «CreateConnection: Connection markznet_local already exists» ويصبح التطبيق
+ * مقفولًا تمامًا (لا تسجيل دخول ولا إنشاء حساب). الحل: نبني مقبضًا جديدًا
+ * (SQLiteDBConnection) مرتبطًا بنفس الاتصال الأصلي الموجود ونستمر.
+ */
+const adoptExistingConnection = async (
+  sqlite: SQLiteConnectionType,
+): Promise<SQLiteDBConnection> => {
+  // 1) لعلّ الغلاف الحالي يعرف الاتصال (نفس سياق جافاسكربت) — نعيد استخدامه.
+  try {
+    return await sqlite.retrieveConnection(DB_NAME, false);
+  } catch {
+    // السجلّ لدى الغلاف فارغ — الاتصال موجود في الطبقة الأصلية فقط.
+  }
+
+  // 2) نبني مقبضًا جديدًا مرتبطًا بنفس الاتصال الأصلي الموجود.
+  if (!dbConnectionCtor) {
+    const mod = await import("@capacitor-community/sqlite");
+    sqlitePlugin = mod.CapacitorSQLite;
+    dbConnectionCtor = mod.SQLiteDBConnection as unknown as SQLiteDBConnectionCtor;
+  }
+  // نربط المقبض بنفس نسخة الإضافة التي يستخدمها الغلاف الحالي (إن أمكن).
+  const plugin =
+    (sqlite as unknown as { sqlite?: CapacitorSQLitePlugin }).sqlite ??
+    sqlitePlugin ??
+    (await import("@capacitor-community/sqlite")).CapacitorSQLite;
+  const db = new dbConnectionCtor(DB_NAME, false, plugin);
+
+  // نسجّل المقبض في السجلّ الداخلي للغلاف (إن وُجد) لتبقى بقية الاستدعاءات
+  // (isConnection / closeConnection ...) متسقة معه.
+  try {
+    const dict = (sqlite as unknown as { _connectionDict?: Map<string, SQLiteDBConnection> })
+      ._connectionDict;
+    dict?.set(`RW_${DB_NAME}`, db);
+  } catch {
+    // ليس جوهريًا — الاعتماد يعمل بدونه.
+  }
+  return db;
+};
+
+/**
+ * ينشئ الاتصال أو يعيد استخدام الموجود — متينًا ضد عدم تطابق السجلّين.
+ * مُصدَّر أيضًا ليستخدمه اختبار الانحدار scripts/test-connection-recovery.mjs.
+ */
+export const acquireConnection = async (
+  sqlite: SQLiteConnectionType,
+): Promise<SQLiteDBConnection> => {
+  try {
+    const { result: known } = await sqlite.isConnection(DB_NAME, false);
+    if (known) return await sqlite.retrieveConnection(DB_NAME, false);
+  } catch {
+    // نفحص بالإنشاء أدناه.
+  }
+
+  try {
+    return await sqlite.createConnection(DB_NAME, false, "no-encryption", DB_VERSION, false);
+  } catch (err) {
+    const msg = String((err as { message?: unknown })?.message ?? err);
+    if (!/already exists/i.test(msg)) throw err;
+    // الاتصال موجود في الطبقة الأصلية من سياق سابق — نعتمده بدلًا من قفل التطبيق.
+    return adoptExistingConnection(sqlite);
+  }
+};
+
 /** يفتح (أو يعيد استخدام) اتصال SQLite واحد مع تطبيق السكيمة مرة واحدة فقط. */
 export const getDB = (): Promise<SQLiteDBConnection> => {
   assertBrowser();
@@ -477,16 +567,11 @@ export const getDB = (): Promise<SQLiteDBConnection> => {
 
   initPromise = (async () => {
     try {
-      const { CapacitorSQLite, SQLiteConnection } = await import("@capacitor-community/sqlite");
-      const sqlite = new SQLiteConnection(CapacitorSQLite);
-      sqliteConn = sqlite;
+      const sqlite = await ensureSqlite();
 
       await ensureWebStore(sqlite);
 
-      const { result: alreadyOpen } = await sqlite.isConnection(DB_NAME, false);
-      const db = alreadyOpen
-        ? await sqlite.retrieveConnection(DB_NAME, false)
-        : await sqlite.createConnection(DB_NAME, false, "no-encryption", DB_VERSION, false);
+      const db = await acquireConnection(sqlite);
 
       await db.open();
       await db.execute(SCHEMA_SQL, true);

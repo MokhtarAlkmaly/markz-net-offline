@@ -59,6 +59,7 @@ npm run lint         # ESLint
 npx tsc --noEmit     # فحص الأنواع
 npm run test:db      # اختبار القاعدة المحلية (sql.js)
 npm run test:integration  # اختبارات تكاملية: مصادقة/صلاحيات/عزل/بوابة معلمين
+npm run test:connection   # انحدار: اعتماد اتصال أصلي موجود (قفلة already exists)
 ```
 
 ## عند التعديل

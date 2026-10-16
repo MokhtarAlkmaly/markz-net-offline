@@ -114,6 +114,7 @@ cd android && ./gradlew assembleDebug
 ```bash
 npm run test:db           # قاعدة البيانات المحلية: المخطط + CRUD (sql.js)
 npm run test:integration  # تكاملية: مصادقة/صلاحيات/عزل بيانات/بوابة معلمين
+npm run test:connection   # انحدار: اعتماد اتصال أصلي موجود (قفلة already exists)
 ```
 
 الاختبارات التكاملية تحزّم **الشيفرة الحقيقية** (`storage` + `localAuth` +
@@ -181,5 +182,6 @@ scripts/test-harness.mjs    منصة الاختبارات (esbuild + ستُبّ�
 | `npx tsc --noEmit` | فحص أنواع TypeScript |
 | `npm run test:db` | اختبار قاعدة البيانات المحلية |
 | `npm run test:integration` | الاختبارات التكاملية |
+| `npm run test:connection` | اختبار انحدار لاعتماد اتصال SQLite موجود مسبقًا |
 | `npm run brand:assets` | إعادة توليد الأيقونات والشعار وشاشات البداية |
 | `npm run format` | Prettier |
