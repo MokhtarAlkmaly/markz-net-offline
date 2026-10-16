@@ -27,6 +27,8 @@ import {
   Calendar,
   Sparkles,
   Plus,
+  Upload,
+  X,
 } from "lucide-react";
 import { OfflineBadge } from "@/components/OfflineBadge";
 import { BRAND_NAME_TAGGED } from "@/lib/brand";
@@ -46,6 +48,7 @@ import {
 } from "@/utils/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { studentImportSummary, type StudentImportResult } from "@/utils/studentExcelImport";
 
 const Index = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -54,6 +57,8 @@ const Index = () => {
   const [customColumns, setCustomColumns] = useState<CustomColumnDef[]>([]);
   const [studentStatuses, setStudentStatuses] = useState<string[]>(DEFAULT_STATUSES);
   const [dirtyMap, setDirtyMap] = useState<Record<number, Student>>({});
+  /** نتيجة آخر استيراد Excel — تُعرض شريطاً أعلى الجدول لتأكيد العملية. */
+  const [lastImport, setLastImport] = useState<StudentImportResult | null>(null);
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [addingStudent, setAddingStudent] = useState(false);
   const [newStudent, setNewStudent] = useState({
@@ -169,6 +174,18 @@ const Index = () => {
       setAddingStudent(false);
     }
   };
+
+  /**
+   * بعد استيراد Excel للسجل الشامل: يعيد تحميل البيانات (والطلاب والإحصاءات
+   * معاً) ويحفظ ملخص العملية لعرضه في شريط أعلى الجدول.
+   */
+  const handleImportCompleted = useCallback(
+    async (result: StudentImportResult) => {
+      setLastImport(result);
+      await loadData();
+    },
+    [loadData],
+  );
 
   const handleAddCustomColumn = useCallback(
     async (column: CustomColumnDef) => {
@@ -389,6 +406,30 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Import summary strip */}
+            {lastImport && (
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-300/70 bg-emerald-50/80 px-3 py-2 text-xs font-bold text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                <Upload className="h-4 w-4 shrink-0" />
+                <span>
+                  آخر استيراد Excel للسجل الشامل — {studentImportSummary(lastImport)}
+                  {lastImport.total ? ` | إجمالي الصفوف: ${lastImport.total}` : ""}
+                </span>
+                {lastImport.errors.length > 0 && (
+                  <span className="text-amber-700 dark:text-amber-300">
+                    ({lastImport.errors.length} ملاحظة على الملف)
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setLastImport(null)}
+                  className="ms-auto rounded-lg p-1 transition hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
+                  aria-label="إخفاء ملخص الاستيراد"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Students Table */}
             {loading ? (
               <div className="rounded-[1.75rem] border border-white/70 bg-card/80 py-16 text-center text-muted-foreground shadow-xl shadow-primary/5">
@@ -408,6 +449,7 @@ const Index = () => {
                 dirtyMap={dirtyMap}
                 onDirtyChange={handleDirtyChange}
                 activeYear={currentYear}
+                onImportCompleted={handleImportCompleted}
               />
             )}
           </main>

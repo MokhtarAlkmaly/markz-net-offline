@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Student,
   CustomColumnDef,
@@ -37,6 +37,10 @@ import {
   X,
   PencilLine,
   ListFilter,
+  Upload,
+  Download,
+  CircleHelp,
+  CheckCircle2,
 } from "lucide-react";
 import { StudentProfileModal } from "./StudentProfileModal";
 import { getDuplicateNameCounts, getDuplicateCountFor } from "@/utils/studentNames";
@@ -47,6 +51,13 @@ import {
 } from "@/utils/schoolGrades";
 import { esc } from "@/utils/report";
 import { loadXLSX, saveWorkbook } from "@/utils/excel";
+import {
+  STUDENT_IMPORT_INSTRUCTIONS,
+  buildStudentImportTemplate,
+  importStudentsFromRows,
+  studentImportSummary,
+  type StudentImportResult,
+} from "@/utils/studentExcelImport";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
@@ -123,6 +134,8 @@ interface Props {
   dirtyMap: Record<number, Student>;
   onDirtyChange: (studentId: number, data: Student) => void;
   activeYear?: string;
+  /** يُنادى بعد كل استيراد Excel ناجح (لتحديث إحصاءات الصفحة مثلاً). */
+  onImportCompleted?: (result: StudentImportResult) => void;
 }
 
 export const StudentsTable = ({
@@ -138,6 +151,7 @@ export const StudentsTable = ({
   dirtyMap,
   onDirtyChange,
   activeYear = "1447",
+  onImportCompleted,
 }: Props) => {
   const { toast } = useToast();
 
@@ -164,6 +178,12 @@ export const StudentsTable = ({
   const [statusTargetStudentId, setStatusTargetStudentId] = useState<number | null>(null);
 
   const [manageColsOpen, setManageColsOpen] = useState(false);
+
+  // استيراد Excel للسجل الشامل
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<StudentImportResult | null>(null);
 
   // Local student update helper
   const updateStudentField = (
@@ -371,6 +391,84 @@ export const StudentsTable = ({
     setDuplicatesOnly(false);
   };
 
+  /**
+   * استيراد ملف Excel للسجل الشامل (كل الأعوام).
+   *
+   * الأعمدة تُطابَق بعناوين القالب/ملف التصدير، والأعمدة المخصصة بعنوانها؛
+   * والسجلات المطابقة بالاسم تُحدَّث، والباقي يُنشأ، والأعوام المذكورة
+   * تُسجَّل حتى تظهر في عمود «الأعوام المسجل بها».
+   */
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const XLSX = await loadXLSX();
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) throw new Error("الملف لا يحتوي على ورقة بيانات");
+
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: "" });
+      if (rows.length === 0) {
+        toast({
+          title: "الملف فارغ",
+          description: "لا توجد صفوف بيانات في الورقة الأولى",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = await importStudentsFromRows(rows, customColumns);
+      setImportResult(result);
+      onImportCompleted?.(result);
+      await onUpdate();
+
+      toast({
+        title: "تم استيراد ملف Excel",
+        description: `قُرئ ${result.total} صفاً — ${studentImportSummary(result)}`,
+        variant: result.errors.length > 0 ? "destructive" : undefined,
+      });
+    } catch (error) {
+      console.error("Student Excel import failed:", error);
+      toast({
+        title: "تعذّر الاستيراد",
+        description:
+          error instanceof Error ? error.message : "تأكد أن الملف بصيغة Excel صحيحة وحاول مجدداً",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  /** يُنزّل قالب الاستيراد بنفس رؤوس السجل الشامل + الأعمدة المخصصة. */
+  const handleDownloadTemplate = async () => {
+    try {
+      const XLSX = await loadXLSX();
+      const { headers, rows } = buildStudentImportTemplate(customColumns);
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      worksheet["!cols"] = headers.map(() => ({ wch: 22 }));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "قالب السجل الشامل");
+      await saveWorkbook(workbook, "قالب_استيراد_السجل_الشامل.xlsx");
+      toast({
+        title: "تم تنزيل القالب",
+        description: "املأ الصف الأول كما هو ثم أعد الملف إلى «استيراد Excel»",
+      });
+    } catch (error) {
+      console.error("Template download failed:", error);
+      toast({
+        title: "تعذّر تنزيل القالب",
+        description: "حدث خطأ أثناء حفظ الملف",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Export to Excel
   const handleExportExcel = async () => {
     const data = filteredStudents.map((s, i) => {
@@ -538,6 +636,30 @@ export const StudentsTable = ({
             <Button
               variant="outline"
               size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="w-full sm:w-auto gap-1 rounded-xl border-emerald-300/70 font-bold text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+            >
+              <Upload className="h-4 w-4" /> {importing ? "جارٍ الاستيراد..." : "استيراد Excel"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="w-full sm:w-auto gap-1 rounded-xl text-xs font-bold"
+            >
+              <CircleHelp className="h-3.5 w-3.5" /> إرشادات القالب
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleImportFile}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExportExcel}
               className="w-full sm:w-auto gap-1 rounded-xl font-bold"
             >
@@ -553,6 +675,19 @@ export const StudentsTable = ({
             </Button>
           </div>
         </div>
+
+        {/* Import progress */}
+        {importing && (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/60 bg-emerald-50/70 px-3 py-2 text-xs font-bold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <Upload className="h-4 w-4 shrink-0 animate-pulse" />
+            <span className="min-w-0 flex-1">
+              جارٍ قراءة الملف واستيراد السجل الشامل... لا تغلق الصفحة.
+            </span>
+            <span className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-emerald-200/70 dark:bg-emerald-500/20">
+              <span className="block h-full w-1/2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-400" />
+            </span>
+          </div>
+        )}
 
         {/* Duplicate names warning strip */}
         {duplicateGroupsCount > 0 && (
@@ -1282,6 +1417,111 @@ export const StudentsTable = ({
           <DialogFooter>
             <Button variant="outline" onClick={() => setManageColsOpen(false)}>
               إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: import guidance + result summary */}
+      <Dialog
+        open={importDialogOpen}
+        onOpenChange={(open) => {
+          setImportDialogOpen(open);
+          if (!open) setImportResult(null);
+        }}
+      >
+        <DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-emerald-600" />
+              استيراد Excel للسجل الشامل (كل الأعوام)
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-1">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200">
+              <p className="font-bold">
+                الاستيراد يحدّث السجل الشامل: الاسم الموجود يُحدَّث، والجديد يُضاف، والأعوام
+                المذكورة تُسجَّل في عمود «الأعوام المسجل بها».
+              </p>
+            </div>
+
+            <ol className="space-y-2 text-xs leading-relaxed text-foreground">
+              {STUDENT_IMPORT_INSTRUCTIONS.map((line, index) => (
+                <li key={line} className="flex gap-2 rounded-xl bg-secondary/40 px-3 py-2">
+                  <span className="font-black text-primary">{index + 1}.</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ol>
+
+            <div className="rounded-2xl border border-border p-3">
+              <p className="mb-2 text-xs font-bold text-foreground">
+                رؤوس أعمدة القالب{customColumns.length > 0 ? " (مع الأعمدة المخصصة الحالية)" : ""}:
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {buildStudentImportTemplate(customColumns).headers.map((header) => (
+                  <span
+                    key={header}
+                    className="rounded-lg bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary"
+                  >
+                    {header}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {importResult && (
+              <div className="space-y-2 rounded-2xl border border-emerald-300/70 bg-card p-3">
+                <div className="flex items-center gap-2 text-sm font-black text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="h-4 w-4" /> نتيجة آخر استيراد
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                  <div className="rounded-xl bg-secondary/50 p-2 text-center">
+                    <div className="text-lg font-black">{importResult.imported}</div>
+                    <div className="text-muted-foreground">طلاب جدد</div>
+                  </div>
+                  <div className="rounded-xl bg-secondary/50 p-2 text-center">
+                    <div className="text-lg font-black">{importResult.updated}</div>
+                    <div className="text-muted-foreground">سجلات محدَّثة</div>
+                  </div>
+                  <div className="rounded-xl bg-secondary/50 p-2 text-center">
+                    <div className="text-lg font-black">{importResult.skipped}</div>
+                    <div className="text-muted-foreground">صفوف متخطاة</div>
+                  </div>
+                  <div className="rounded-xl bg-secondary/50 p-2 text-center">
+                    <div className="text-lg font-black">{importResult.total}</div>
+                    <div className="text-muted-foreground">إجمالي الصفوف</div>
+                  </div>
+                </div>
+                {importResult.errors.length > 0 && (
+                  <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-amber-300/70 bg-amber-50/70 p-2 text-[11px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <AlertTriangle className="h-3.5 w-3.5" /> ملاحظات على الملف
+                    </div>
+                    {importResult.errors.map((error) => (
+                      <div key={error}>• {error}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-wrap gap-2 sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => void handleDownloadTemplate()}
+              className="gap-1.5 rounded-xl font-bold"
+            >
+              <Download className="h-4 w-4" /> تنزيل قالب Excel
+            </Button>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="gap-1.5 rounded-xl font-bold"
+            >
+              <Upload className="h-4 w-4" /> اختيار ملف للاستيراد
             </Button>
           </DialogFooter>
         </DialogContent>
