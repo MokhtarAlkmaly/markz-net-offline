@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/select";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { StudentsTable } from "@/components/StudentsTable";
-import { ImportExport } from "@/components/ImportExport";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -37,7 +36,6 @@ import { DEFAULT_SCHOOL_GRADES } from "@/utils/schoolGrades";
 import {
   loadGlobalStudentsWithYears,
   getActiveYear,
-  loadTeachers,
   loadCustomColumns,
   saveCustomColumns,
   loadStudentStatuses,
@@ -52,7 +50,6 @@ const Index = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [currentYear, setCurrentYear] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [teacherNames, setTeacherNames] = useState<string[]>([]);
   const [customColumns, setCustomColumns] = useState<CustomColumnDef[]>([]);
   const [studentStatuses, setStudentStatuses] = useState<string[]>(DEFAULT_STATUSES);
   const [dirtyMap, setDirtyMap] = useState<Record<number, Student>>({});
@@ -60,7 +57,6 @@ const Index = () => {
   const [addingStudent, setAddingStudent] = useState(false);
   const [newStudent, setNewStudent] = useState({
     name: "",
-    teacher: "",
     gender: "",
     school_grade: "",
   });
@@ -72,15 +68,10 @@ const Index = () => {
     setLoading(true);
     try {
       // السجل الشامل لكل الأعوام: لا يرتبط بعام محدد. يُهيَّئ الكاش أولاً
-      // لتقرأ الإعدادات والمعلمين والمعلمات من نفس لقطة الحساب.
+      // لتقرأ الإعدادات من نفس لقطة الحساب.
       const allStudents = await loadGlobalStudentsWithYears();
-      const [teachers, columns, statuses] = await Promise.all([
-        loadTeachers(),
-        loadCustomColumns(),
-        loadStudentStatuses(),
-      ]);
+      const [columns, statuses] = await Promise.all([loadCustomColumns(), loadStudentStatuses()]);
       setStudents(allStudents);
-      setTeacherNames(teachers.map((t) => t.name));
       setCustomColumns(columns);
       setStudentStatuses(statuses);
       setDirtyMap({});
@@ -149,10 +140,8 @@ const Index = () => {
 
     setAddingStudent(true);
     try {
-      const teacher = newStudent.teacher.trim();
       const id = await saveStudent({
         name,
-        teacher,
         gender: newStudent.gender || undefined,
         school_grade: newStudent.school_grade || undefined,
       });
@@ -161,7 +150,7 @@ const Index = () => {
       }
 
       await loadData();
-      setNewStudent({ name: "", teacher: "", gender: "", school_grade: "" });
+      setNewStudent({ name: "", gender: "", school_grade: "" });
       setAddStudentOpen(false);
       toast({
         title: "تمت إضافة الطالب",
@@ -395,8 +384,6 @@ const Index = () => {
               </div>
             </div>
 
-            {currentYear && <ImportExport onDataImported={loadData} currentYear={currentYear} />}
-
             {/* Students Table */}
             {loading ? (
               <div className="rounded-[1.75rem] border border-white/70 bg-card/80 py-16 text-center text-muted-foreground shadow-xl shadow-primary/5">
@@ -408,7 +395,6 @@ const Index = () => {
                 onUpdate={loadData}
                 onSaveStudent={handleSaveStudent}
                 onDeleteStudent={handleDeleteStudent}
-                teacherNames={teacherNames}
                 customColumns={customColumns}
                 onAddCustomColumn={handleAddCustomColumn}
                 onDeleteCustomColumn={handleDeleteCustomColumn}
@@ -426,7 +412,7 @@ const Index = () => {
             onOpenChange={(open) => {
               if (addingStudent) return;
               setAddStudentOpen(open);
-              if (!open) setNewStudent({ name: "", teacher: "", gender: "", school_grade: "" });
+              if (!open) setNewStudent({ name: "", gender: "", school_grade: "" });
             }}
           >
             <DialogContent dir="rtl" className="max-w-md">
@@ -460,31 +446,6 @@ const Index = () => {
                     disabled={addingStudent}
                     className="rounded-xl"
                   />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="new-student-teacher"
-                    className="text-sm font-bold text-foreground"
-                  >
-                    المعلم/ة / الحلقة
-                  </label>
-                  <Input
-                    id="new-student-teacher"
-                    value={newStudent.teacher}
-                    onChange={(event) =>
-                      setNewStudent((current) => ({ ...current, teacher: event.target.value }))
-                    }
-                    placeholder="اختياري"
-                    list="student-teacher-names"
-                    disabled={addingStudent}
-                    className="rounded-xl"
-                  />
-                  <datalist id="student-teacher-names">
-                    {teacherNames.map((teacher) => (
-                      <option key={teacher} value={teacher} />
-                    ))}
-                  </datalist>
                 </div>
 
                 <div className="space-y-1.5">

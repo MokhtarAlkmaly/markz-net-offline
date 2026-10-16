@@ -489,7 +489,6 @@ export const StudentProfileModal = ({
         <div class="info-grid">
           <div><strong>اسم الطالب:</strong> ${esc(studentData.name)}</div>
           <div><strong>الجنس:</strong> ${esc(studentData.gender || "-")}</div>
-          <div><strong>المعلم/ة:</strong> ${esc(studentData.teacher || "-")}</div>
           <div><strong>الحالة:</strong> ${esc(studentData.status || "طبيعي")}</div>
           <div><strong>تاريخ الالتحاق:</strong> ${esc(studentData.hijri_join_date || "-")}</div>
           <div><strong>السنة الدراسية وقت الالتحاق:</strong> ${esc(studentData.school_grade || "-")}</div>
@@ -599,13 +598,6 @@ export const StudentProfileModal = ({
                       <span>•</span>
                     </>
                   )}
-                  <span>
-                    المعلم/ة:{" "}
-                    <strong className="text-foreground">
-                      {studentData?.teacher || student.teacher || "غير محدد"}
-                    </strong>
-                  </span>
-                  <span>•</span>
                   <span>
                     الحالة:{" "}
                     <Badge variant="outline" className="text-primary font-bold">
@@ -786,14 +778,6 @@ export const StudentProfileModal = ({
                     placeholder="770000000"
                     className="h-9 mt-1 rounded-lg"
                     dir="ltr"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-foreground">المعلم/ة</label>
-                  <Input
-                    value={studentData.teacher || ""}
-                    onChange={(e) => setStudentData({ ...studentData, teacher: e.target.value })}
-                    className="h-9 mt-1 rounded-lg"
                   />
                 </div>
               </div>

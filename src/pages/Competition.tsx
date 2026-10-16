@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CompetitionTable } from "@/components/CompetitionTable";
+import { ImportExport } from "@/components/ImportExport";
 import { NotificationSystem } from "@/components/notifications/NotificationSystem";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { RecallStudents } from "@/components/RecallStudents";
@@ -525,6 +526,14 @@ const Competition = () => {
             </div>
           </div>
         </div>
+
+        {competitionType === "ramadan" && (
+          <ImportExport
+            onDataImported={loadData}
+            currentYear={dataYearKey}
+            displayYear={currentYear}
+          />
+        )}
 
         <div className="pt-4 pb-8">
           {loading ? (
