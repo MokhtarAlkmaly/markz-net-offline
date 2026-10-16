@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/logo.png";
 import { OfflineNotice } from "@/components/OfflineBadge";
+import { BRAND_NAME_TAGGED, BRAND_SECTION } from "@/lib/brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import {
   Mail,
   Lock,
@@ -38,6 +39,7 @@ const getErrorMessage = (error: unknown) => {
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
 const Auth = () => {
+  const centerBrand = useCenterBrand();
   const initialParams = useMemo(
     () => (typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null),
     [],
@@ -156,8 +158,7 @@ const Auth = () => {
       if (firstRun) {
         toast({
           title: "تم إنشاء حساب المسؤول",
-          description:
-            "أهلاً بك في Markz Net (نسخة بلا إنترنت) — يمكنك الآن البدء بإدخال البيانات.",
+          description: `أهلاً بك في ${centerBrand.name} — ${BRAND_NAME_TAGGED} — يمكنك الآن البدء بإدخال البيانات.`,
         });
       } else {
         toast({
@@ -226,10 +227,10 @@ const Auth = () => {
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-white/15">
               <Sparkles className="h-3.5 w-3.5" />
-              Markz Net — نسخة بلا إنترنت
+              {BRAND_NAME_TAGGED}
             </div>
             <h2 className="mt-5 text-3xl font-black leading-relaxed text-white">
-              Markz Net — نسخة بلا إنترنت: بياناتك تبقى على جهازك.
+              {centerBrand.name}: بياناتك تبقى على جهازك.
             </h2>
             <p className="mt-3 max-w-sm text-sm leading-7 text-white/75">
               كل البيانات — الحسابات والطلاب والمسابقات والمتابعة الشهرية — مخزّنة في قاعدة بيانات
@@ -257,12 +258,15 @@ const Auth = () => {
         <div className="p-6 sm:p-8">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="rounded-3xl bg-primary/5 p-3 ring-1 ring-primary/10">
-              <img src={logo} alt="الشعار" className="h-20 w-auto" />
+              <img src={centerBrand.logoUrl} alt="شعار المركز" className="h-20 w-auto" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-primary">Markz Net — نسخة بلا إنترنت</h1>
+              <h1 className="text-xl font-black text-primary">{centerBrand.name}</h1>
               <p className="mt-0.5 text-[11px] font-semibold text-primary/70">
-                نظام إدارة حلقات ومسابقات القرآن الكريم — قسم القرآن الكريم
+                {BRAND_NAME_TAGGED} · نظام إدارة حلقات ومسابقات القرآن الكريم — {BRAND_SECTION}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {centerBrand.identity.supervisor}
               </p>
               <p className="mt-1 text-sm font-semibold text-foreground">{title}</p>
               <p className="mt-1 text-xs leading-6 text-muted-foreground">{description}</p>

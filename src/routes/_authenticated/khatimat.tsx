@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageTitle } from "@/lib/center-brand";
 import Khatimat from "@/pages/Khatimat";
 
 export const Route = createFileRoute("/_authenticated/khatimat")({
   head: () => ({
     meta: [
-      { title: "كشف الخاتمين والخاتمات | Markz Net — نسخة بلا إنترنت" },
+      { title: pageTitle("كشف الخاتمين والخاتمات") },
       {
         name: "description",
         content: "قائمة الطلاب الذين ختمن القرآن الكريم عبر جميع الأعوام.",
       },
       {
         property: "og:title",
-        content: "كشف الخاتمين والخاتمات | Markz Net — نسخة بلا إنترنت",
+        content: pageTitle("كشف الخاتمين والخاتمات"),
       },
       {
         property: "og:description",

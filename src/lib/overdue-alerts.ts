@@ -1,6 +1,6 @@
 import { TRACKING_MONTHS, type MonthlyRecord, type Student } from "@/types/student";
 import { arabicIncludes } from "@/utils/arabicSearch";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterPrintTitle } from "@/lib/center-brand";
 
 /**
  * منطق «المتأخرات والتنبيهات الذكية» في وحدة نقية بلا أي اعتماد على قاعدة
@@ -543,7 +543,7 @@ export interface AlertsPrintOptions {
  * كشوف النظام، ويُمرَّر إلى printHtml. الدالة نقية وتُختبَر مباشرة.
  */
 export function buildAlertsPrintBody(alerts: OverdueAlert[], options: AlertsPrintOptions): string {
-  const { year, month, logoSrc, centerName = BRAND_PRINT_TITLE, generatedAt = "" } = options;
+  const { year, month, logoSrc, centerName = activeCenterPrintTitle(), generatedAt = "" } = options;
   const summary = summarizeAlerts(alerts);
   const monthLabel = hijriMonthName(month);
   const escape = (value: string) =>

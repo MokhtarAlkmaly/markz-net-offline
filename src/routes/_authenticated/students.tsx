@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageTitle } from "@/lib/center-brand";
 import Index from "@/pages/Index";
 
-const title = "الطلاب - السجل الرسمي الشامل | Markz Net — نسخة بلا إنترنت";
+const title = () => pageTitle("الطلاب - السجل الرسمي الشامل");
 const description =
   "سجل الطلاب الرسمي الشامل لكل الأعوام في حلقات القرآن الكريم - Markz Net — نسخة بلا إنترنت.";
 
@@ -13,9 +14,9 @@ const description =
 export const Route = createFileRoute("/_authenticated/students")({
   head: () => ({
     meta: [
-      { title },
+      { title: title() },
       { name: "description", content: description },
-      { property: "og:title", content: title },
+      { property: "og:title", content: title() },
       { property: "og:description", content: description },
     ],
   }),

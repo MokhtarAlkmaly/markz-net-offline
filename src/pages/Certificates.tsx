@@ -30,6 +30,8 @@ import {
   Wand2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { activeCenterLogoSrc } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { START_YEAR, END_YEAR, Student } from "@/types/student";
 import { RecallStudents } from "@/components/RecallStudents";
 import {
@@ -79,6 +81,7 @@ const CERT_BODY: Record<string, string> = {
 
 const Certificates = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState("");
   const [rows, setRows] = useState<Certificate[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -222,7 +225,7 @@ const Certificates = () => {
   const certHtml = (c: Certificate) => `
     <div class="cert">
       <div class="frame">
-        <img class="logo" src="${new URL(logo, window.location.origin).href}" alt="" />
+        <img class="logo" src="${new URL(activeCenterLogoSrc(logo), window.location.origin).href}" alt="" />
         <div class="kicker">مركز تحفيظ القرآن الكريم</div>
         <div class="title">${esc(c.title || CERT_TYPES[c.cert_type] || "شهادة")}</div>
         <div class="rule"></div>
@@ -280,7 +283,7 @@ const Certificates = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="الشعار" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">

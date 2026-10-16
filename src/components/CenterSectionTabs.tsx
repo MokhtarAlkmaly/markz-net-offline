@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
 import { centerSections, getCenterSection } from "@/lib/center-sections";
-import { BRAND_NAME, BRAND_OFFLINE_TAG } from "@/lib/brand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 
 /** Route links styled as tabs: each section has a bookmarkable, independent page. */
 export function CenterSectionTabs() {
+  const centerBrand = useCenterBrand();
   const { pathname } = useLocation();
   const activeSection = getCenterSection(pathname);
   const activeLink = useRef<HTMLAnchorElement>(null);
@@ -16,7 +18,7 @@ export function CenterSectionTabs() {
   return (
     <header className="border-b bg-background px-4 pb-3 pt-4 md:px-6 print:hidden">
       <p className="mb-3 pr-12 text-sm font-bold text-muted-foreground md:pr-0">
-        أقسام المركز — {BRAND_NAME} · {BRAND_OFFLINE_TAG}
+        أقسام {centerBrand.name} — {BRAND_NAME_TAGGED}
       </p>
       <nav aria-label="أقسام المركز" className="overflow-x-auto pb-1">
         <div className="flex w-max min-w-full gap-2">

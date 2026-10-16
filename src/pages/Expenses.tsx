@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "@/lib/router-compat";
 import { ArrowRight, Receipt, Plus, Pencil, Trash2, Save, Printer, Calendar } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { START_YEAR, END_YEAR } from "@/types/student";
 import {
   getActiveYear,
@@ -54,6 +54,7 @@ export const EXPENSE_CATEGORIES: Record<string, string> = {
 
 const Expenses = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState("");
   const [rows, setRows] = useState<Expense[]>([]);
   const [donors, setDonors] = useState<string[]>([]);
@@ -192,7 +193,7 @@ const Expenses = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="الشعار" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">

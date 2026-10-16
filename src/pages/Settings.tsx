@@ -23,12 +23,14 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { OfflineNotice } from "@/components/OfflineBadge";
+import { CenterIdentitySettings } from "@/components/CenterIdentitySettings";
 import { BRAND_LOCAL_NOTE, BRAND_NAME_TAGGED } from "@/lib/brand";
 import {
   AlertTriangle,
   ArrowRight,
+  Building2,
   CalendarDays,
   CheckCircle2,
   Columns3,
@@ -79,6 +81,7 @@ const years = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => START_
 const Settings = () => {
   const { toast } = useToast();
   const { user, isAdmin, viewAs, refreshAccess } = useAuth();
+  const centerBrand = useCenterBrand();
 
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -157,11 +160,12 @@ const Settings = () => {
 
   const settingsSummary = useMemo(
     () => [
+      { label: "اسم المركز", value: centerBrand.name, icon: Building2 },
       { label: "العام النشط", value: `${currentYear}هـ`, icon: CalendarDays },
       { label: "حالات الطلاب", value: statuses.length, icon: CheckCircle2 },
       { label: "أعمدة مخصصة", value: columns.length, icon: Columns3 },
     ],
-    [columns.length, currentYear, statuses.length],
+    [centerBrand.name, columns.length, currentYear, statuses.length],
   );
 
   const saveProfile = async () => {
@@ -373,7 +377,7 @@ const Settings = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="الشعار" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">
@@ -400,7 +404,7 @@ const Settings = () => {
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {settingsSummary.map((item) => {
             const Icon = item.icon;
             return (
@@ -411,7 +415,9 @@ const Settings = () => {
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <div className="text-xs text-muted-foreground">{item.label}</div>
-                    <div className="mt-1 text-xl font-black text-primary">{item.value}</div>
+                    <div className="mt-1 break-words text-lg font-black leading-7 text-primary">
+                      {item.value}
+                    </div>
                   </div>
                   <div className="rounded-2xl bg-primary/10 p-3 text-primary">
                     <Icon className="h-5 w-5" />
@@ -428,6 +434,8 @@ const Settings = () => {
           </div>
         ) : (
           <>
+            <CenterIdentitySettings readOnly={readOnly} />
+
             <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
               <div className="space-y-5">
                 <Card className="rounded-[1.75rem] border-white/70 bg-card/90 shadow-xl shadow-primary/5">
@@ -670,7 +678,8 @@ const Settings = () => {
                 </CardTitle>
                 <CardDescription>
                   استخدم هذه الأدوات بحذر. حذف عام أو طالب من عام لا يحذف السجل العام للطالب، بينما
-                  حذف قاعدة البيانات يحذف كل بيانات الحساب نهائياً.
+                  حذف قاعدة البيانات يحذف كل بيانات الحساب نهائياً (وتبقى هوية المركز محفوظة على
+                  الجهاز لصفحة الدخول).
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-3">

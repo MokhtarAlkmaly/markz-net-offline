@@ -31,7 +31,7 @@ import {
   Trash2,
   UsersRound,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { END_YEAR, START_YEAR, Student } from "@/types/student";
 import {
   deleteStudentFromYear,
@@ -57,6 +57,7 @@ interface TeacherRow {
 
 const Halaqat = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const { viewAs } = useAuth();
   const [year, setYear] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
@@ -262,8 +263,8 @@ const Halaqat = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img
-                src={logo}
-                alt="شعار المركز"
+                src={centerBrand.logoUrl}
+                alt={centerBrand.name}
                 className="h-14 w-14 rounded-2xl bg-white/95 p-1 object-contain"
               />
               <div>

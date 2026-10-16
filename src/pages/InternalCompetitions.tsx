@@ -32,7 +32,9 @@ import {
   Search,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
+import { BRAND_NAME_TAGGED } from "@/lib/brand";
 import { Student, START_YEAR, END_YEAR, InternalCompetition } from "@/types/student";
 import {
   getActiveYear,
@@ -46,6 +48,7 @@ import { esc } from "@/utils/report";
 
 const InternalCompetitions = () => {
   const { toast } = useToast();
+  const centerBrand = useCenterBrand();
   const [currentYear, setCurrentYear] = useState<string>("1447");
   const [rows, setRows] = useState<InternalCompetition[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -206,8 +209,8 @@ const InternalCompetitions = () => {
         @media print{@page{size:A4 landscape;margin:10mm}}
       </style></head><body>
         <div class="header">
-          <img src="${logo}" alt="Markz Net — نسخة بلا إنترنت" />
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <img src="${activeCenterLogoSrc(logo)}" alt="${activeCenterPrintTitle()}" />
+          <h1>${activeCenterPrintTitle()}</h1>
           <h2>كشف المسابقات الداخلية - عام ${esc(currentYear)}هـ</h2>
         </div>
         <table>
@@ -235,7 +238,7 @@ const InternalCompetitions = () => {
                 <ArrowRight className="h-4 w-4" /> رجوع
               </Button>
             </Link>
-            <img src={logo} alt="logo" className="h-16 w-auto" />
+            <img src={centerBrand.logoUrl} alt={centerBrand.name} className="h-16 w-auto" />
             <div className="w-20" />
           </div>
           <div className="text-center">
@@ -244,7 +247,8 @@ const InternalCompetitions = () => {
               المسابقات القرآنية الداخلية
             </h1>
             <p className="text-sm opacity-90 mt-1">
-              إدارة المسابقات والتصفيات الداخلية بMarkz Net — نسخة بلا إنترنت - عام {currentYear}هـ
+              إدارة المسابقات والتصفيات الداخلية في {centerBrand.name} — {BRAND_NAME_TAGGED} - عام{" "}
+              {currentYear}هـ
             </p>
           </div>
         </div>

@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageTitle } from "@/lib/center-brand";
 import Teachers from "@/pages/Teachers";
 
 export const Route = createFileRoute("/_authenticated/teachers")({
   head: () => ({
     meta: [
-      { title: "المعلمين والمعلمات والإكراميات | Markz Net — نسخة بلا إنترنت" },
+      { title: pageTitle("المعلمين والمعلمات والإكراميات") },
       {
         name: "description",
         content: "إدارة المعلمين والمعلمات وإكرامياتهم الشهرية في المسابقة الرمضانية.",
       },
       {
         property: "og:title",
-        content: "المعلمين والمعلمات والإكراميات | Markz Net — نسخة بلا إنترنت",
+        content: pageTitle("المعلمين والمعلمات والإكراميات"),
       },
       {
         property: "og:description",

@@ -28,6 +28,22 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
   `markznet.*` في localStorage — تغييرها يفقد المستخدمين بياناتهم.
 - التفاصيل الكاملة: `docs/الهوية-وتمييز-النسختين.md`.
 
+## هوية المركز (اسم + شعار) — لتشغيل التطبيق لأكثر من مركز
+
+- لكل حساب «هوية مركز» يضبطها من: الإعدادات → هوية المركز
+  (`src/components/CenterIdentitySettings.tsx`).
+- المصدر الواحد للهوية: `src/lib/center-brand.ts` + المزوّد
+  `src/hooks/useCenterBrand.tsx`، وتُخزَّن عبر `loadCenterIdentity` /
+  `saveCenterIdentity` في `src/utils/storage.ts`
+  (مفتاح `<userId>:center_identity`) مع نسخة خفيفة في `localStorage`
+  بمفتاح `markznet.centerBrand` لصفحة الدخول (بلا تحميل SQLite قبل الدخول).
+- **لا تكتب اسم المركز نصاً** في الصفحات:
+  - في React: `const { name, logoUrl, headerLine, identity } = useCenterBrand()`.
+  - في قوالب الطباعة (خارج React): `activeCenterPrintTitle()` و
+    `activeCenterLogoSrc(logo)` من `@/lib/center-brand` — تقرأ الهوية النشطة
+    المتزامنة التي يحدّثها المزوّد.
+- الدليل: `docs/هوية-المركز-والتخصيص.md`.
+
 ## البنية المحلية
 
 | الملف                           | الدور                                                      |
@@ -43,6 +59,8 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 | `src/utils/communityStorage.ts` | سجل المجتمع (أقسام الرعاية/التدريب) — محلي بالكامل         |
 | `src/utils/examStorage.ts`      | بنك أسئلة الاختبارات — محلي بالكامل                        |
 | `src/utils/quranText.ts`        | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت) |
+| `src/lib/center-brand.ts`       | هوية المركز (اسم/إشراف/شعار) + ذاكرة قوالب الطباعة         |
+| `src/hooks/useCenterBrand.tsx`  | مزوّد الهوية لكل الواجهة (`useCenterBrand`)                |
 
 ميزات منقولة من المستودع الأصلي (بنسخة محلية خالصة): سجل المعلمين والمعلمات
 العام بتبويباته (`src/components/teachers/`)، الأسئلة والاختبارات

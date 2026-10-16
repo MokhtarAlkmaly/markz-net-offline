@@ -13,7 +13,8 @@ import { FileText, Printer } from "lucide-react";
 import { loadYearData, loadHifzHistory } from "@/utils/storage";
 import { resolveBaseHifz, calculateGrade, calculatePrize } from "@/utils/calculations";
 import logo from "@/assets/logo.png";
-import { BRAND_PRINT_TITLE } from "@/lib/brand";
+import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import { useCenterBrand } from "@/hooks/useCenterBrand";
 
 interface Props {
   student: Student;
@@ -35,6 +36,7 @@ interface YearReport {
 }
 
 export const StudentReport = ({ student }: Props) => {
+  const centerBrand = useCenterBrand();
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [showReport, setShowReport] = useState(false);
   const [reports, setReports] = useState<YearReport[]>([]);
@@ -145,8 +147,8 @@ export const StudentReport = ({ student }: Props) => {
         @media print { body { padding: 10px; } }
       </style></head><body>
         <div class="header">
-          <img src="${logo}" alt="الشعار" />
-          <h1>${BRAND_PRINT_TITLE}</h1>
+          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
+          <h1>${activeCenterPrintTitle()}</h1>
           <h2>تقرير المسابقة الرمضانية - ${esc(student.name)}</h2>
         </div>
         <div class="student-info">
@@ -222,8 +224,8 @@ export const StudentReport = ({ student }: Props) => {
           {showReport && reports.length > 0 && (
             <div ref={reportRef}>
               <div className="header">
-                <img src={logo} alt="الشعار" />
-                <h1>{BRAND_PRINT_TITLE}</h1>
+                <img src={centerBrand.logoUrl} alt={centerBrand.name} />
+                <h1>{activeCenterPrintTitle()}</h1>
                 <h2>تقرير المسابقة الرمضانية - {student.name}</h2>
               </div>
               <div className="student-info">

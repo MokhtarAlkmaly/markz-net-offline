@@ -25,11 +25,12 @@ export * as users from ${JSON.stringify(path.join(ROOT, "src/utils/users.ts"))};
 export * as storage from ${JSON.stringify(path.join(ROOT, "src/utils/storage.ts"))};
 export * as teacherPortal from ${JSON.stringify(path.join(ROOT, "src/utils/teacherPortal.ts"))};
 export * as viewAs from ${JSON.stringify(path.join(ROOT, "src/utils/viewAs.ts"))};
+export * as centerBrand from ${JSON.stringify(path.join(ROOT, "src/lib/center-brand.ts"))};
 `,
   outfile: path.join(ROOT, ".output/tests/test-integration.mjs"),
 });
 
-const { localAuth, users, storage, teacherPortal, viewAs } = await import(outfile);
+const { localAuth, users, storage, teacherPortal, viewAs, centerBrand } = await import(outfile);
 
 const { ok, finish } = createTestRunner();
 console.log("الاختبارات التكاملية للنسخة المستقلة (sql.js + المخطط الحقيقي)\n");
@@ -602,6 +603,156 @@ await ok("التقرير اليدوي: إدخال واعتماد فوري وتح
   await localAuth.signOut();
   const stopped = await teacherPortal.openPortalByCode(portals[0].code);
   if (!stopped.error) throw new Error("الرابط الموقوف يجب ألا يفتح");
+});
+
+// ============================================================
+// 7) هوية المركز (اسم المركز + الشعار) — استخدام التطبيق لأكثر من مركز
+// ============================================================
+
+const validLogo =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8AAAwAB/AF+7g9PAAAAAElFTkSuQmCC";
+
+await ok("هوية المركز: حفظ الاسم والشعار لكل حساب + نسخة الجهاز", async () => {
+  await loginAs(ownerEmail, "owner-pass-789");
+  const saved = await storage.saveCenterIdentity({
+    name: "مركز النور لتحفيظ القرآن الكريم",
+    supervisor: "الإشراف - شرعب الرونة",
+    logo: validLogo,
+  });
+  if (saved.name !== "مركز النور لتحفيظ القرآن الكريم") throw new Error("الاسم لم يُحفظ");
+
+  let loaded = await storage.loadCenterIdentity();
+  if (loaded.name !== "مركز النور لتحفيظ القرآن الكريم") throw new Error("الاسم لم يُقرأ");
+  if (loaded.logo !== validLogo) throw new Error("الشعار المخصص لم يُحفظ");
+  if (loaded.supervisor !== "الإشراف - شرعب الرونة") throw new Error("سطر الإشراف لم يُحفظ");
+
+  // شعار غير صالح (رابط خارجي) يُرفض فيبقى الشعار المدمج
+  await storage.saveCenterIdentity({
+    name: "مركز النور لتحفيظ القرآن الكريم",
+    supervisor: "الإشراف - شرعب الرونة",
+    logo: "https://example.com/logo.png",
+  });
+  loaded = await storage.loadCenterIdentity();
+  if (loaded.logo !== null) throw new Error("يجب رفض الشعار من رابط خارجي");
+
+  // نسخة الجهاز تُقرأ بلا تسجيل دخول (صفحة الدخول تعرض اسم المركز وشعاره)
+  const deviceRaw = window.localStorage.getItem("markznet.centerBrand");
+  if (!deviceRaw) throw new Error("نسخة الجهاز لم تُكتب");
+  if (JSON.parse(deviceRaw).name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("نسخة الجهاز باسم خاطئ");
+  }
+
+  await localAuth.signOut();
+  const beforeLogin = await storage.loadCenterIdentity();
+  if (beforeLogin.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("صفحة الدخول يجب أن تعرض هوية آخر مركز مُعرَّف على الجهاز");
+  }
+
+  // حساب آخر: يرث هوية الجهاز، ثم يخصّص هويته دون التأثير على الأول
+  await loginAs(adminEmail, "admin-pass-123");
+  const inherited = await storage.loadCenterIdentity();
+  if (inherited.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("الحساب الجديد يجب أن يبدأ من هوية الجهاز");
+  }
+  await storage.saveCenterIdentity({
+    name: "مركز الفرقان",
+    supervisor: "إشراف الفرقان",
+    logo: validLogo,
+  });
+
+  await loginAs(ownerEmail, "owner-pass-789");
+  const ownerIdentity = await storage.loadCenterIdentity();
+  if (ownerIdentity.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("هوية المركز الأول تأثرت بحساب آخر");
+  }
+
+  // استعادة الهوية الافتراضية
+  const reset = await storage.resetCenterIdentity();
+  if (reset.name !== "Markz Net" || reset.logo !== null) {
+    throw new Error("استعادة الهوية الافتراضية فشلت");
+  }
+  const afterReset = await storage.loadCenterIdentity();
+  if (afterReset.name !== "Markz Net") throw new Error("الهوية الافتراضية لم تُحفظ");
+});
+
+await ok("هوية المركز: وضع الاطلاع للقراءة فقط + الحذف", async () => {
+  // المالك يخصّص هويته ثم يمنح المطالِعة إذناً بالاطلاع
+  await loginAs(ownerEmail, "owner-pass-789");
+  await storage.saveCenterIdentity({
+    name: "مركز النور لتحفيظ القرآن الكريم",
+    supervisor: "إشراف النور",
+    logo: validLogo,
+  });
+  await loginAs(adminEmail, "admin-pass-123");
+  await users.grantAccess(viewerUser.id);
+
+  await loginAs(viewerEmail, "viewer-pass-123");
+  setViewAs({ id: ownerUser.id, name: "صاحبة البيانات", email: ownerEmail });
+  const viewed = await storage.loadCenterIdentity();
+  if (viewed.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("وضع الاطلاع يجب أن يعرض هوية صاحب البيانات");
+  }
+  const denied = await storage
+    .saveCenterIdentity({ name: "مركز مزيف", supervisor: "", logo: null })
+    .then(
+      () => null,
+      (e) => e,
+    );
+  if (!denied || denied.name !== "ReadOnlyViewError") {
+    throw new Error(`تعديل هوية الغير أثناء الاطلاع يجب أن يُرفض (رمى: ${denied?.name})`);
+  }
+  setViewAs(null);
+
+  // حذف كل بيانات الحساب يمسح هويته المحفوظة (وتبقى نسخة الجهاز لصفحة الدخول)
+  await loginAs(ownerEmail, "owner-pass-789");
+  await storage.deleteEntireDatabase();
+  const gone = await storage.loadCenterIdentity();
+  if (gone.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("بعد حذف البيانات يجب أن تُستعاد هوية الجهاز المعروضة");
+  }
+  const deviceAfterDelete = JSON.parse(window.localStorage.getItem("markznet.centerBrand"));
+  if (deviceAfterDelete?.name !== "مركز النور لتحفيظ القرآن الكريم") {
+    throw new Error("نسخة الجهاز يجب أن تبقى بعد حذف بيانات الحساب");
+  }
+});
+
+await ok("هوية المركز: تطبيع القيم والنصوص المشتقة (قوالب الطباعة)", async () => {
+  const normalized = centerBrand.normalizeCenterIdentity({
+    name: "  مركز النور  ",
+    supervisor: "   ",
+    logo: "javascript:alert(1)",
+  });
+  if (normalized.name !== "مركز النور") throw new Error("لم يُطبّع الاسم (trim)");
+  if (normalized.supervisor !== "الإشراف - شرعب الرونة")
+    throw new Error("البديل الافتراضي للإشراف");
+  if (normalized.logo !== null) throw new Error("رابط غير صالح يجب ألا يُقبل كشعار");
+
+  if (centerBrand.centerName({ name: "   ", supervisor: "", logo: null }) !== "Markz Net") {
+    throw new Error("الاسم الفارغ يجب أن يعود إلى اسم النسخة");
+  }
+  const printTitle = centerBrand.centerPrintTitle({
+    name: "مركز النور",
+    supervisor: "",
+    logo: null,
+  });
+  if (!printTitle.startsWith("مركز النور نسخة بلا إنترنت")) {
+    throw new Error(`ترويسة الطباعة غير متوقعة: ${printTitle}`);
+  }
+
+  // الذاكرة المتزامنة التي تقرأ منها قوالب الطباعة
+  centerBrand.setActiveCenterIdentity({ name: "مركز الفرقان", supervisor: "", logo: null });
+  if (centerBrand.activeCenterPrintTitle() !== "مركز الفرقان نسخة بلا إنترنت · قسم القرآن الكريم") {
+    throw new Error(`ترويسة الطباعة النشطة: ${centerBrand.activeCenterPrintTitle()}`);
+  }
+  if (centerBrand.activeCenterLogoSrc("fallback.png") !== "fallback.png") {
+    throw new Error("بلا شعار مخصص يجب استخدام الشعار المدمج");
+  }
+  const logo = "data:image/png;base64,AAAA";
+  centerBrand.setActiveCenterIdentity({ name: "مركز الفرقان", supervisor: "", logo });
+  if (centerBrand.activeCenterLogoSrc("fallback.png") !== logo) {
+    throw new Error("الشعار المخصص لم يُستخدم في الطباعة");
+  }
+  centerBrand.setActiveCenterIdentity(centerBrand.DEFAULT_CENTER_IDENTITY);
 });
 
 finish("الاختبارات التكاملية");
