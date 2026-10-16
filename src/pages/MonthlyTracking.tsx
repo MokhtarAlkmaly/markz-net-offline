@@ -31,7 +31,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc, activeCenterPrintTitle } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
+import { esc } from "@/utils/report";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { RecallStudents } from "@/components/RecallStudents";
 import {
@@ -331,6 +336,7 @@ const MonthlyTracking = () => {
         .header{text-align:center;border-bottom:3px solid #2d7a52;padding-bottom:10px;margin-bottom:14px}
         .header img{height:70px}
         .header h1{font-size:19px;color:#2d7a52;margin:6px 0 2px}
+        .header .supervisor{font-size:12px;color:#777;margin:2px 0 4px}
         .header h2{font-size:14px;color:#555}
         .info{display:flex;justify-content:space-between;background:#f0f7f3;padding:8px 12px;border-radius:8px;margin-bottom:14px;font-size:13px}
         h3{color:#2d7a52;border-bottom:1px solid #cde3d5;padding-bottom:4px;font-size:15px;margin-top:16px}
@@ -347,8 +353,9 @@ const MonthlyTracking = () => {
         @media print{@page{size:A4;margin:12mm}}
       </style></head><body>
         <div class="header">
-          <img src="${activeCenterLogoSrc(logo)}" alt="الشعار" />
-          <h1>${activeCenterPrintTitle()}</h1>
+          <img src="${esc(activeCenterLogoSrc(logo))}" alt="الشعار" />
+          <h1>${esc(activeCenterPrintTitle())}</h1>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
           <h2>التقرير الشهري لمتابعة الطالب/ة</h2>
         </div>
         <div class="info">

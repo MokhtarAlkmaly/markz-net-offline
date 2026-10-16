@@ -1,19 +1,46 @@
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import defaultLogo from "@/assets/logo.png";
+import { withActiveCenterPrintBranding } from "@/lib/print-branding";
+
+const resolvePrintAssetUrl = (src: string) => {
+  if (/^(?:data:|blob:|https?:)/i.test(src) || typeof window === "undefined") return src;
+  return new URL(src, window.location.href).href;
+};
+
+const waitForImages = async (doc: Document) => {
+  const pending = Array.from(doc.images).filter((image) => !image.complete);
+  await Promise.all(
+    pending.map(
+      (image) =>
+        new Promise<void>((resolve) => {
+          const finish = () => resolve();
+          image.addEventListener("load", finish, { once: true });
+          image.addEventListener("error", finish, { once: true });
+          // لا نمنع الطباعة إذا تعذّر تحميل صورة واحدة.
+          setTimeout(finish, 1500);
+        }),
+    ),
+  );
+};
 
 // يطبع مستند HTML كامل (نفس ما كان يُمرَّر سابقاً لنافذة window.open + print):
 // - بالمتصفح العادي (Chrome): نفس الطريقة القديمة تماماً (فتح نافذة وطباعتها)
 // - داخل تطبيق Capacitor المثبت: يولّد صورة من المحتوى ثم يحوّلها PDF فعلي
 //   ويفتح قائمة مشاركة Android (حفظ / واتساب / طباعة عبر تطبيقات الطابعة المثبتة)
 export const printHtmlDocument = async (fullHtml: string, fileName: string) => {
+  const defaultLogoUrl = resolvePrintAssetUrl(defaultLogo);
+  const brandedHtml = withActiveCenterPrintBranding(fullHtml, defaultLogoUrl);
+
   if (!Capacitor.isNativePlatform()) {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    printWindow.document.write(fullHtml);
+    printWindow.document.write(brandedHtml);
     printWindow.document.close();
+    await waitForImages(printWindow.document);
     printWindow.focus();
-    setTimeout(() => printWindow.print(), 300);
+    printWindow.print();
     return;
   }
 
@@ -35,13 +62,14 @@ export const printHtmlDocument = async (fullHtml: string, fileName: string) => {
   try {
     await new Promise<void>((resolve) => {
       iframe.onload = () => resolve();
-      iframe.srcdoc = fullHtml;
+      iframe.srcdoc = brandedHtml;
     });
     // مهلة بسيطة لضمان اكتمال رسم الخطوط والتنسيق قبل التصوير
     await new Promise((r) => setTimeout(r, 400));
 
     const doc = iframe.contentDocument;
     if (!doc || !doc.body) throw new Error("تعذّر تحميل محتوى الطباعة");
+    await waitForImages(doc);
 
     doc.body.style.width = "900px";
     iframe.style.height = `${doc.body.scrollHeight}px`;

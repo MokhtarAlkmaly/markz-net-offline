@@ -1,4 +1,10 @@
-import { activeCenterName, activeCenterPrintTitle } from "@/lib/center-brand";
+import logo from "@/assets/logo.png";
+import {
+  activeCenterLogoSrc,
+  activeCenterName,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { esc } from "@/utils/report";
 import {
   type ExamPaper,
@@ -15,7 +21,10 @@ import {
 export const PAPER_CSS = `
   .paper{page-break-after:always}
   .paper:last-child{page-break-after:auto}
+  .center-header{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+  .center-header img{width:42px;height:42px;object-fit:contain}
   .center{text-align:center;font-weight:bold;font-size:15px;color:#0e6b3a}
+  .supervisor{text-align:center;color:#666;font-size:10px}
   .meta{text-align:center;color:#444;font-size:12px;margin-bottom:10px}
   .note{font-size:12px;color:#555;background:#f4faf6;border:1px solid #cfe3d7;border-radius:6px;padding:6px 8px}
   .qs{font-size:15pt;line-height:2}
@@ -33,7 +42,13 @@ const questionItem = (q: PaperQuestion) => `
 /** ورقة نموذج كاملة: ترويسة + بيانات الطالب + الأسئلة */
 export const buildPaperHtml = (paper: ExamPaper, year: string): string => `
     <div class="paper">
-      <div class="center">${esc(activeCenterPrintTitle())}</div>
+      <div class="center-header" data-center-print-brand="active">
+        <img src="${esc(activeCenterLogoSrc(logo))}" alt="${esc(activeCenterName())}" />
+        <div>
+          <div class="center">${esc(activeCenterPrintTitle())}</div>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
+        </div>
+      </div>
       <h2 style="border:0;text-align:center;margin:4px 0">اختبار حفظ القرآن الكريم</h2>
       <div class="meta">
         العام ${esc(year)}هـ — فئة الحفظ: ${esc(paper.categoryLabel)} (${esc(paper.rangeLabel)})
@@ -64,7 +79,13 @@ export const buildPapersHtml = (papers: ExamPaper[], year: string): string =>
 /** مفتاح التصحيح: مرجع كل سؤال (السورة والآيات والجزء والصفحة وطول المقطع) */
 export const buildAnswerKeyHtml = (papers: ExamPaper[], year: string): string => `
     <div class="paper">
-      <div class="center">${esc(activeCenterPrintTitle())}</div>
+      <div class="center-header" data-center-print-brand="active">
+        <img src="${esc(activeCenterLogoSrc(logo))}" alt="${esc(activeCenterName())}" />
+        <div>
+          <div class="center">${esc(activeCenterPrintTitle())}</div>
+          <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
+        </div>
+      </div>
       <h2 style="border:0;text-align:center;margin:4px 0">مفتاح تصحيح أسئلة الحفظ</h2>
       <div class="meta">العام ${esc(year)}هـ — فئة الحفظ: ${esc(papers[0]?.categoryLabel ?? "")} — ${papers.length} نماذج</div>
       <table>

@@ -30,7 +30,11 @@ import {
   Wand2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { activeCenterLogoSrc } from "@/lib/center-brand";
+import {
+  activeCenterLogoSrc,
+  activeCenterPrintTitle,
+  activeCenterSupervisorLine,
+} from "@/lib/center-brand";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { START_YEAR, END_YEAR, Student } from "@/types/student";
 import { RecallStudents } from "@/components/RecallStudents";
@@ -225,8 +229,9 @@ const Certificates = () => {
   const certHtml = (c: Certificate) => `
     <div class="cert">
       <div class="frame">
-        <img class="logo" src="${new URL(activeCenterLogoSrc(logo), window.location.origin).href}" alt="" />
-        <div class="kicker">مركز تحفيظ القرآن الكريم</div>
+        <img class="logo" src="${new URL(activeCenterLogoSrc(logo), window.location.origin).href}" alt="${esc(activeCenterPrintTitle())}" />
+        <div class="kicker">${esc(activeCenterPrintTitle())}</div>
+        <div class="supervisor">${esc(activeCenterSupervisorLine())}</div>
         <div class="title">${esc(c.title || CERT_TYPES[c.cert_type] || "شهادة")}</div>
         <div class="rule"></div>
         <div class="pre">تُمنح هذه الشهادة إلى</div>
@@ -255,7 +260,8 @@ const Certificates = () => {
         radial-gradient(circle at bottom left,rgba(14,107,58,.10),transparent 45%),#fffdf7;
         outline:1px solid #c5a450;outline-offset:6px}
       .logo{height:22mm;margin-bottom:4mm}
-      .kicker{letter-spacing:2px;color:#7a6a3a;font-size:15pt}
+      .kicker{letter-spacing:1px;color:#7a6a3a;font-size:13pt}
+      .supervisor{font-size:10pt;color:#777;margin-top:1mm}
       .title{font-size:32pt;font-weight:bold;color:#0e6b3a;margin:2mm 0}
       .rule{width:60%;height:2px;margin:3mm auto;background:linear-gradient(90deg,transparent,#c5a450,transparent)}
       .pre{font-size:14pt;color:#555}

@@ -26,11 +26,13 @@ export * as storage from ${JSON.stringify(path.join(ROOT, "src/utils/storage.ts"
 export * as teacherPortal from ${JSON.stringify(path.join(ROOT, "src/utils/teacherPortal.ts"))};
 export * as viewAs from ${JSON.stringify(path.join(ROOT, "src/utils/viewAs.ts"))};
 export * as centerBrand from ${JSON.stringify(path.join(ROOT, "src/lib/center-brand.ts"))};
+export * as printBranding from ${JSON.stringify(path.join(ROOT, "src/lib/print-branding.ts"))};
 `,
   outfile: path.join(ROOT, ".output/tests/test-integration.mjs"),
 });
 
-const { localAuth, users, storage, teacherPortal, viewAs, centerBrand } = await import(outfile);
+const { localAuth, users, storage, teacherPortal, viewAs, centerBrand, printBranding } =
+  await import(outfile);
 
 const { ok, finish } = createTestRunner();
 console.log("الاختبارات التكاملية للنسخة المستقلة (sql.js + المخطط الحقيقي)\n");
@@ -692,6 +694,17 @@ await ok("هوية المركز: وضع الاطلاع للقراءة فقط + �
   if (viewed.name !== "مركز النور لتحفيظ القرآن الكريم") {
     throw new Error("وضع الاطلاع يجب أن يعرض هوية صاحب البيانات");
   }
+  centerBrand.setActiveCenterIdentity(viewed);
+  const viewedReport = printBranding.withActiveCenterPrintBranding(
+    "<!doctype html><html><head></head><body><h1>تقرير اختبار</h1></body></html>",
+    "default-logo.png",
+  );
+  if (
+    !viewedReport.includes("مركز النور لتحفيظ القرآن الكريم") ||
+    !viewedReport.includes(validLogo)
+  ) {
+    throw new Error("ترويسة التقرير في وضع الاطلاع يجب أن تستخدم هوية صاحب البيانات وشعاره");
+  }
   const denied = await storage
     .saveCenterIdentity({ name: "مركز مزيف", supervisor: "", logo: null })
     .then(
@@ -751,6 +764,31 @@ await ok("هوية المركز: تطبيع القيم والنصوص المشت
   centerBrand.setActiveCenterIdentity({ name: "مركز الفرقان", supervisor: "", logo });
   if (centerBrand.activeCenterLogoSrc("fallback.png") !== logo) {
     throw new Error("الشعار المخصص لم يُستخدم في الطباعة");
+  }
+
+  centerBrand.setActiveCenterIdentity({
+    name: "مركز <الفرقان> & الخاص",
+    supervisor: "إشراف <خاص> & رسمي",
+    logo,
+  });
+  const unbrandedHtml =
+    "<!doctype html><html><head></head><body><h1>كشف المصروفات</h1></body></html>";
+  const brandedHtml = printBranding.withActiveCenterPrintBranding(unbrandedHtml, "fallback.png");
+  if (!brandedHtml.includes('data-center-print-brand="active"')) {
+    throw new Error("يجب إدراج ترويسة هوية المركز في التقرير غير المعرّف");
+  }
+  if (!brandedHtml.includes("مركز &lt;الفرقان&gt; &amp; الخاص")) {
+    throw new Error("يجب ترميز اسم المركز بأمان داخل التقرير");
+  }
+  if (!brandedHtml.includes("إشراف &lt;خاص&gt; &amp; رسمي") || !brandedHtml.includes(logo)) {
+    throw new Error("يجب أن تتضمن الترويسة الإشراف والشعار النشطين");
+  }
+  const existingBrandHtml = `<html><body><h1>${centerBrand.activeCenterPrintTitle()}</h1></body></html>`;
+  if (
+    printBranding.withActiveCenterPrintBranding(existingBrandHtml, "fallback.png") !==
+    existingBrandHtml
+  ) {
+    throw new Error("يجب عدم تكرار الهوية في قالب يملك ترويسة مخصصة");
   }
   centerBrand.setActiveCenterIdentity(centerBrand.DEFAULT_CENTER_IDENTITY);
 });

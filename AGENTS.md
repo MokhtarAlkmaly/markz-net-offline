@@ -40,8 +40,10 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 - **لا تكتب اسم المركز نصاً** في الصفحات:
   - في React: `const { name, logoUrl, headerLine, identity } = useCenterBrand()`.
   - في قوالب الطباعة (خارج React): `activeCenterPrintTitle()` و
-    `activeCenterLogoSrc(logo)` من `@/lib/center-brand` — تقرأ الهوية النشطة
-    المتزامنة التي يحدّثها المزوّد.
+    `activeCenterLogoSrc(logo)` و`activeCenterSupervisorLine()` من
+    `@/lib/center-brand` — تقرأ الهوية النشطة المتزامنة التي يحدّثها المزوّد.
+    `printHtmlDocument()` يضيف ترويسة تلقائية للقوالب التي لا تملك ترويسة
+    خاصة عبر `src/lib/print-branding.ts`؛ لا تكرر الهوية يدوياً في تلك القوالب.
 - الدليل: `docs/هوية-المركز-والتخصيص.md`.
 
 ## القائمة الجانبية والتخطيط (لا تكرّر نقطة التثبيت)
@@ -78,6 +80,7 @@ Markz Net نسخة مستقلة بالكامل من نظام إدارة حلقا
 | `src/utils/quranText.ts`        | نص المصحف من أصل ثابت `public/quran/uthmani.json` (بلا نت) |
 | `src/hooks/useSidebarDock.ts`   | نقطة تثبيت القائمة الجانبية (1280px) — مصدر واحد           |
 | `src/lib/center-brand.ts`       | هوية المركز (اسم/إشراف/شعار) + ذاكرة قوالب الطباعة         |
+| `src/lib/print-branding.ts`     | يضيف هوية الحساب تلقائياً لقوالب الطباعة غير المعرّفة      |
 | `src/hooks/useCenterBrand.tsx`  | مزوّد الهوية لكل الواجهة (`useCenterBrand`)                |
 
 ميزات منقولة من المستودع الأصلي (بنسخة محلية خالصة): سجل المعلمين والمعلمات
