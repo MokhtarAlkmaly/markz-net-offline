@@ -15,6 +15,7 @@
     "test:integration": "node scripts/test-integration.mjs",
     "test:connection": "node scripts/test-connection-recovery.mjs",
     "test:layout": "node scripts/test-layout.mjs",
+    "test:backup": "node scripts/test-backup.mjs",
     "format": "prettier --write .",
     "postinstall": "node scripts/copy-sqlite-wasm.mjs",
     "cap:sync": "cap sync android",

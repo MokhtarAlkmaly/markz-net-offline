@@ -5,7 +5,7 @@
  *
  * السيناريوهات: المصادقة وأول مسؤول، الصلاحيات ومنح الاطلاع، عزل بيانات
  * المستخدمين، وضع الاطلاع للقراءة فقط، حذف قاعدة بيانات مستخدم، بوابة
- * المعلمين/المعلمات والتقرير اليدوي.
+ * المعلمين/المعلمات والتقرير اليدوي، ونسخ بيانات الحساب احتياطياً واستعادتها.
  *
  *   node scripts/test-integration.mjs
  */
@@ -28,6 +28,8 @@ export * as viewAs from ${JSON.stringify(path.join(ROOT, "src/utils/viewAs.ts"))
 export * as studentImport from ${JSON.stringify(path.join(ROOT, "src/utils/studentExcelImport.ts"))};
 export * as centerBrand from ${JSON.stringify(path.join(ROOT, "src/lib/center-brand.ts"))};
 export * as printBranding from ${JSON.stringify(path.join(ROOT, "src/lib/print-branding.ts"))};
+export * as accountBackup from ${JSON.stringify(path.join(ROOT, "src/utils/accountBackup.ts"))};
+export * as localDB from ${JSON.stringify(path.join(ROOT, "src/utils/localDB.ts"))};
 `,
   outfile: path.join(ROOT, ".output/tests/test-integration.mjs"),
 });
@@ -41,6 +43,8 @@ const {
   studentImport,
   centerBrand,
   printBranding,
+  accountBackup,
+  localDB,
 } = await import(outfile);
 
 const { ok, finish } = createTestRunner();
@@ -1033,6 +1037,90 @@ await ok("استيراد Excel: العزل بين الحسابات + الملخ�
   ) {
     throw new Error("ملخص بلا تغييرات يجب أن يكون صريحاً");
   }
+});
+
+// ============================================================
+// 9) النسخ الاحتياطي والاستعادة الآمنة
+// ============================================================
+
+let accountBackupFile;
+
+await ok("النسخ الاحتياطي: ملف واحد يحوي 16 جدولاً ولا يحوي بيانات الدخول", async () => {
+  await loginAs(adminEmail, "admin-pass-123");
+  accountBackupFile = await accountBackup.createAccountBackup();
+  if (Object.keys(accountBackupFile.tables).length !== 16) {
+    throw new Error(`عدد جداول النسخة ${Object.keys(accountBackupFile.tables).length} بدل 16`);
+  }
+  const serialized = JSON.stringify(accountBackupFile);
+  if (serialized.includes("password_hash") || serialized.includes('"app_users"')) {
+    throw new Error("تسرّبت بيانات حسابات الدخول إلى النسخة الاحتياطية");
+  }
+});
+
+await ok("النسخ الاحتياطي: تصدير بيانات الحساب الحالي فقط", async () => {
+  if (accountBackupFile.tables.students.some((student) => student.user_id !== adminUser.id)) {
+    throw new Error("التصدير تضمّن طلاب حساب آخر");
+  }
+  if (accountBackupFile.accountSettings.some((setting) => setting.key.includes(":"))) {
+    throw new Error("مفتاح إعداد الحساب يتضمن بادئة مستخدم داخل الملف");
+  }
+});
+
+await ok("النسخ الاحتياطي: JSON صالح قابل للتحقق وإعادة القراءة", async () => {
+  const parsed = accountBackup.parseAccountBackupText(JSON.stringify(accountBackupFile));
+  if (
+    parsed.version !== 1 ||
+    parsed.tables.students.length !== accountBackupFile.tables.students.length
+  ) {
+    throw new Error("تعذّرت إعادة قراءة الملف أو تغيّر إصدار المخطط");
+  }
+});
+
+await ok("النسخ الاحتياطي: معاينة الدمج لا تغيّر البيانات", async () => {
+  const before = await localDB.getCachedStudents();
+  const preview = await accountBackup.previewAccountBackup(accountBackupFile);
+  const after = await localDB.getCachedStudents();
+  if (before.length !== after.length) throw new Error("تغيّر عدد الطلاب أثناء المعاينة");
+  if (preview.totalAdded !== 0)
+    throw new Error(`النسخة الحالية غير متطابقة مع نفسها: ${preview.totalAdded} سجلات جديدة`);
+});
+
+await ok("النسخ الاحتياطي: استعادة الملف نفسه لا تكرر السجلات", async () => {
+  await loginAs(adminEmail, "admin-pass-123");
+  const before = (await localDB.getCachedStudents()).filter(
+    (student) => student.user_id === adminUser.id,
+  );
+  const result = await accountBackup.restoreAccountBackup(accountBackupFile);
+  const after = (await localDB.getCachedStudents()).filter(
+    (student) => student.user_id === adminUser.id,
+  );
+  if (result.totalAdded !== 0 || before.length !== after.length) {
+    throw new Error("الاستعادة المكررة أضافت بيانات مرة أخرى");
+  }
+});
+
+await ok("النسخ الاحتياطي: منع الكتابة في وضع الاطلاع ورفض جدول الدخول", async () => {
+  setViewAs({ id: ownerUser.id, name: "بيانات المالك", email: ownerEmail });
+  let readonlyRejected = false;
+  try {
+    await accountBackup.restoreAccountBackup(accountBackupFile);
+  } catch (error) {
+    readonlyRejected = String(error?.message ?? error).includes("وضع الاطلاع");
+  } finally {
+    setViewAs(null);
+  }
+  if (!readonlyRejected) throw new Error("الاستعادة لم تُرفض في وضع الاطلاع");
+
+  let accountsRejected = false;
+  try {
+    accountBackup.parseAccountBackup({
+      ...accountBackupFile,
+      tables: { ...accountBackupFile.tables, app_users: [] },
+    });
+  } catch {
+    accountsRejected = true;
+  }
+  if (!accountsRejected) throw new Error("قُبل جدول حسابات الدخول ضمن الملف");
 });
 
 finish("الاختبارات التكاملية");

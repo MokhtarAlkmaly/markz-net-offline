@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCenterBrand } from "@/hooks/useCenterBrand";
 import { OfflineNotice } from "@/components/OfflineBadge";
 import { CenterIdentitySettings } from "@/components/CenterIdentitySettings";
+import { AccountBackupSettings } from "@/components/AccountBackupSettings";
 import { BRAND_LOCAL_NOTE, BRAND_NAME_TAGGED } from "@/lib/brand";
 import {
   AlertTriangle,
@@ -672,6 +673,8 @@ const Settings = () => {
                 </Card>
               </div>
             </div>
+
+            <AccountBackupSettings readOnly={readOnly} />
 
             <Card className="rounded-[1.75rem] border-destructive/25 bg-destructive/[0.03] shadow-xl shadow-destructive/5">
               <CardHeader>
